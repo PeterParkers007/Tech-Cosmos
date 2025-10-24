@@ -5,7 +5,7 @@
 ## 🛠️ 工具链 - 技术宇宙的基石
 
 ### 基础设施
-*   **[SerializationKit](https://github.com/yourname/SerializationKit)** - **序列化工具集**
+*   **[SerializationKit](https://github.com/PeterParkers007/Tech-Cosmos.Infra.Serialization.git)** - **序列化工具集**
     - **核心价值**：统一处理JSON、XML等格式的序列化与反序列化，为内容管道提供纯净、高效的数据基石
     - **设计哲学**：严格遵循单一职责原则，是所有需要数据持久化模块的唯一真理源
 
@@ -13,13 +13,13 @@
     - **核心价值**：提供分级、结构化、跨平台的日志能力，是系统调试的望远镜
 
 ### 运行时框架
-*   **[PoolSystem](https://github.com/yourname/PoolSystem)** - **对象池系统**
+*   **[PoolSystem](https://github.com/PeterParkers007/Tech-Cosmos.Runtime.PoolSystem.git)** - **对象池系统**
     - **核心价值**：将对象的生与死转化为内存的呼吸，彻底消除GC压力
 
-*   **[UpdateManager](https://github.com/yourname/UpdateManager)** - **更新调度器**
+*   **[UpdateManager](https://github.com/PeterParkers007/Tech-Cosmos.Runtime.Update.git)** - **更新调度器**
     - **核心价值**：取代杂乱的MonoBehaviour.Update，实现性能可控的帧调度
 
-*   **[AnimationLerper](https://github.com/yourname/AnimationLerper)** - **动画插值引擎**
+*   **[AnimationLerper](https://github.com/PeterParkers007/Tech-Cosmos.Runtime.Animation.git)** - **动画插值引擎**
     - **核心价值**：通过配置与回调，将动画逻辑从代码中彻底解耦
 
 ### 内容管道
