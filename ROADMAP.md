@@ -5,7 +5,7 @@
 - [x] 建立核心架构哲学与分层模型
 - [x] 完成 **工具链** 核心模块 (`PoolSystem`, `AnimationLerper`, `SerializationKit`)
 - [x] 完成 **组件层** 基石 (`Unit-Core`, `CommandSystem`)
-- [ ] **发布 `Unit-Core 1.0`**，并编写完整的API文档与最佳实践指南
+- [x] **发布 `Unit-Core 1.0`**，并编写完整的API文档与最佳实践指南
 - [ ] 通过 `ARPG-Combat-Demo` 验证工具层与组件层的协同能力
 
 ## Phase 2: 操作系统构建与生态拓展
