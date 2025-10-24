@@ -12,6 +12,9 @@
 *   **[LoggingSystem](https://github.com/yourname/LoggingSystem)** - **日志系统**
     - **核心价值**：提供分级、结构化、跨平台的日志能力，是系统调试的望远镜
 
+*   **[ToolBox](https://github.com/PeterParkers007/Tech-Cosmos.Runtime.ToolBox.git)** - **杂项工具箱**
+    - **核心价值**：专门提供一些提升效率的杂项工具
+
 ### 运行时框架
 *   **[PoolSystem](https://github.com/PeterParkers007/Tech-Cosmos.Runtime.PoolSystem.git)** - **对象池系统**
     - **核心价值**：将对象的生与死转化为内存的呼吸，彻底消除GC压力
