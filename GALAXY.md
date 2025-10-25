@@ -9,7 +9,7 @@
     - **核心价值**：统一处理JSON、XML等格式的序列化与反序列化，为内容管道提供纯净、高效的数据基石
     - **设计哲学**：严格遵循单一职责原则，是所有需要数据持久化模块的唯一真理源
 
-*   **[LoggingSystem](https://github.com/yourname/LoggingSystem)** - **日志系统**
+*   **[LoggingSystem](https://github.com/PeterParkers007/Tech-Cosmos.Infra.LoggingSystem.git)** - **日志系统**
     - **核心价值**：提供分级、结构化、跨平台的日志能力，是系统调试的望远镜
 
 *   **[ToolBox](https://github.com/PeterParkers007/Tech-Cosmos.Runtime.ToolBox.git)** - **杂项工具箱**
@@ -85,4 +85,4 @@
 
 ---
 
-*技术宇宙持续扩张中... 最后更新：2025年10月24日*
+*技术宇宙持续扩张中... 最后更新：2025年10月26日*
