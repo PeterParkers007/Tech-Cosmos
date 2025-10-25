@@ -30,7 +30,7 @@
     - **核心价值**：让策划人员在友好界面中调校游戏平衡，产出由SerializationKit处理的标准化数据文件
     - **技术依赖**：基于 `SerializationKit`
 
-*   **[AssetBundleBuilder](https://github.com/yourname/AssetBundleBuilder)** - **资源打包工具**
+*   **[AssetBundleBuilder](https://github.com/PeterParkers007/Tech-Cosmos.Pipeline.AssetBundleBuilder.git)** - **资源打包工具**
     - **核心价值**：自动化构建、命名、依赖管理，将混乱的艺术资源转化为可发布的资产包
 
 ## 🧱 组件层 - 可复用的业务模块
