@@ -81,24 +81,28 @@
 ## 🚀 技术演进
 
 ### 性能优化路径
-┌──AnimationTool (协程管理)
-↓
-├──UpdateManager (全局更新优化)
-↓
-├──PoolSystem (内存管理)
-↓
-└──ECS (极致性能架构)
-
+```mermaid
+graph LR
+    A[AnimationTool<br/>UI动画] --> B[UpdateManager<br/>全局更新优化]
+    B --> C[PoolSystem<br/>内存管理]
+    C --> D[ECS<br/>极致性能架构]
+```
 ### 开发体验提升
-┌──ToolBox (基础工具)
-↓
-├──Serialization (数据工作流)
-↓
-├──AssetBundleBuilder (资源管线)
-↓
-└──LoggingSystem (调试支持)
-
-
+```mermaid
+graph LR
+    A[ToolBox<br/>基础工具] --> B[Serialization<br/>数据工作流]
+    B --> C[AssetBundleBuilder<br/>资源管线]
+    C --> D[LoggingSystem<br/>调试支持]
+```
+```mermaid
+timeline
+    title Tech-Cosmos 技术演进时间线
+    10月3日 : AnimationTool<br/>UI动画系统
+    10月18-19日 : 运行时基础设施<br/>Serialization : UpdateManager : ToolBox
+    10月21日 : PoolSystem<br/>对象池内存管理
+    10月24-25日 : 游戏逻辑与资源<br/>UnitCore : AssetBundleBuilder : LoggingSystem
+    10月28日 : ECS框架<br/>高性能架构
+```
 ## 🏆 核心价值总结
 
 | 工具 | 核心价值 | 技术亮点 |
