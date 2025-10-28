@@ -78,25 +78,25 @@
 ### 🎮 游戏逻辑框架 (10月24日-10月28日)  
 **UnitCore + ECS** - 强大的游戏逻辑架构
 
-## 🚀 技术特色演进
+## 🚀 技术演进
 
 ### 性能优化路径
-AnimationTool (协程管理)
+┌──AnimationTool (协程管理)
 ↓
-UpdateManager (全局更新优化)
+├──UpdateManager (全局更新优化)
 ↓
-PoolSystem (内存管理)
+├──PoolSystem (内存管理)
 ↓
-ECS (极致性能架构)
+└──ECS (极致性能架构)
 
 ### 开发体验提升
-ToolBox (基础工具)
+┌──ToolBox (基础工具)
 ↓
-Serialization (数据工作流)
+├──Serialization (数据工作流)
 ↓
-AssetBundleBuilder (资源管线)
+├──AssetBundleBuilder (资源管线)
 ↓
-LoggingSystem (调试支持)
+└──LoggingSystem (调试支持)
 
 
 ## 🏆 核心价值总结
