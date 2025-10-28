@@ -97,11 +97,11 @@ graph LR
 ```mermaid
 timeline
     title Tech-Cosmos 技术演进时间线
-    10月3日 : AnimationTool<br/>UI动画系统
-    10月18-19日 : 运行时基础设施<br/>Serialization : UpdateManager : ToolBox
-    10月21日 : PoolSystem<br/>对象池内存管理
-    10月24-25日 : 游戏逻辑与资源<br/>UnitCore : AssetBundleBuilder : LoggingSystem
-    10月28日 : ECS框架<br/>高性能架构
+    10月3日 : AnimationTool UI动画系统
+    10月18-19日 : 运行时基础设施 Serialization : UpdateManager : ToolBox
+    10月21日 : PoolSystem 对象池内存管理
+    10月24-25日 : 游戏逻辑与资源 UnitCore : AssetBundleBuilder : LoggingSystem
+    10月28日 : ECS框架 高性能架构
 ```
 ## 🏆 核心价值总结
 
