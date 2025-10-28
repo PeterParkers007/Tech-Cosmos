@@ -48,7 +48,7 @@
 ## 💻 操作系统层 - 游戏世界的通用内核
 
 ### 通用操作系统
-*   **[Entity-OS](https://github.com/yourname/Entity-OS)** - **实体操作系统**
+*   **[Entity-OS](https://github.com/PeterParkers007/Tech-Cosmos.Framework.ECS.git)** - **实体操作系统**
     - **核心价值**：在Unit-Core之上，提供大规模实体的生命周期、查询、分组与阵营管理
 
 *   **[Input-OS](https://github.com/yourname/Input-OS)** - **输入操作系统**  
