@@ -41,7 +41,7 @@
     - **价值**：实现数据、表现、逻辑的彻底分离
 
 ### 能力组件  
-*   **[CommandSystem](https://github.com/yourname/CommandSystem)** - **优雅命令模式实现**
+*   **[CommandSystem](https://github.com/PeterParkers007/Tech-Cosmos.Component.CommandSystem.git)** - **优雅命令模式实现**
     - **特性**：撤销重做、序列化、网络同步就绪
     - **价值**：为游戏行为提供时间旅行能力
 
