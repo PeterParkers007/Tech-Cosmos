@@ -55,6 +55,8 @@ namespace TechCosmos.Hub.Editor
         public string[] requires = Array.Empty<string>();
         public string[] dependsOnRecipes = Array.Empty<string>();
         public string template;
+        public string outputFile;
+        public string doc;
         public bool needsHeroType;
     }
 

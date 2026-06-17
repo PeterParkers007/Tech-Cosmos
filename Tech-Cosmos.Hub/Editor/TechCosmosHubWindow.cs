@@ -649,7 +649,7 @@ namespace TechCosmos.Hub.Editor
             var meta = new VisualElement();
             meta.AddToClassList("hub-detail-meta");
             meta.Add(HubUiFactory.Label(
-                $"输出 → {_recipes.outputRoot}/{GlueGenerator.GetOutputFileName(recipe.template)}",
+                $"输出 → {_recipes.outputRoot}/{GlueGenerator.GetOutputFileName(recipe)}",
                 "hub-chip"));
             meta.Add(HubUiFactory.Label(
                 status.CanGenerate ? "可生成" : "条件未满足",
@@ -685,7 +685,7 @@ namespace TechCosmos.Hub.Editor
             }
 
             shell.ScrollContent.Add(HubUiFactory.Label("详细说明", "hub-section-title"));
-            AddMarkdownCard(shell.ScrollContent, GlueRecipeDocs.GetDoc(recipe.id));
+            AddMarkdownCard(shell.ScrollContent, GlueRecipeDocs.GetDoc(recipe));
 
             var btnRow = new VisualElement();
             btnRow.AddToClassList("hub-btn-row");

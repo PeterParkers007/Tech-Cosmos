@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tech-Cosmos Hub Studio</title>
+  <link rel="stylesheet" href="css/studio.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Hub Studio</h1>
+      <p>扩展技术框架 · 胶水 Recipe · 项目结构</p>
+    </div>
+    <div class="topbar-actions">
+      <span id="connectionStatus" class="status-pill status-pill--offline">离线</span>
+      <button type="button" id="btnReload" class="btn btn-ghost">重新加载</button>
+      <button type="button" id="btnSaveAll" class="btn btn-primary" disabled>保存全部</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button type="button" class="tab tab--active" data-tab="catalog">技术框架</button>
+    <button type="button" class="tab" data-tab="recipes">胶水代码</button>
+    <button type="button" class="tab" data-tab="structure">项目结构</button>
+    <button type="button" class="tab" data-tab="templates">模板文件</button>
+  </nav>
+
+  <main class="workspace">
+    <aside class="sidebar">
+      <div class="sidebar-toolbar">
+        <input type="search" id="searchInput" class="search" placeholder="搜索…" />
+        <button type="button" id="btnAdd" class="btn btn-accent btn-sm">+ 新建</button>
+      </div>
+      <ul id="itemList" class="item-list"></ul>
+    </aside>
+
+    <section class="editor" id="editorPanel">
+      <div class="empty-state" id="emptyState">
+        <h2>选择或新建一项</h2>
+        <p>左侧列表管理条目，右侧编辑详情。修改后点「保存全部」写回 Hub Data 目录。</p>
+      </div>
+      <form id="editorForm" class="editor-form hidden" autocomplete="off"></form>
+    </section>
+
+    <aside class="issues-panel">
+      <h3>校验</h3>
+      <ul id="issuesList" class="issues-list"></ul>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <span id="metaInfo">—</span>
+    <span id="dirtyInfo"></span>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

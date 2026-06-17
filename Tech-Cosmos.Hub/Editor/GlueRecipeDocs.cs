@@ -2,7 +2,14 @@ namespace TechCosmos.Hub.Editor
 {
     internal static class GlueRecipeDocs
     {
-        public static string GetDoc(string recipeId)
+        public static string GetDoc(GlueRecipeEntry recipe)
+        {
+            if (recipe != null && !string.IsNullOrWhiteSpace(recipe.doc))
+                return recipe.doc;
+            return GetDocById(recipe?.id);
+        }
+
+        private static string GetDocById(string recipeId)
         {
             return recipeId switch
             {
@@ -41,7 +48,7 @@ namespace TechCosmos.Hub.Editor
                     "通过 InputHub.Emit 送入施法流。\n\n" +
                     "在 Bootstrap 中 BindKey(KeyCode.Space, \"Attack\") 等。",
 
-                _ => "（暂无扩展说明）"
+                _ => "（暂无扩展说明，可在 Hub Studio 中为该 Recipe 填写 doc 字段）"
             };
         }
     }

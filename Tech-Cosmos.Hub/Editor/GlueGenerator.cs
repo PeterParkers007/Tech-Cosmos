@@ -24,6 +24,13 @@ namespace TechCosmos.Hub.Editor
             return TemplateFileMap.TryGetValue(template, out var fileName) ? fileName : template + ".g.cs";
         }
 
+        public static string GetOutputFileName(GlueRecipeEntry recipe)
+        {
+            if (recipe == null) return null;
+            if (!string.IsNullOrWhiteSpace(recipe.outputFile)) return recipe.outputFile;
+            return string.IsNullOrWhiteSpace(recipe.template) ? null : GetOutputFileName(recipe.template);
+        }
+
         public static GlueRecipeStatus Evaluate(GlueRecipeEntry recipe, PackageCatalogFile catalog, GlueRecipeFile recipeFile)
         {
             var status = new GlueRecipeStatus { Recipe = recipe };
@@ -52,8 +59,12 @@ namespace TechCosmos.Hub.Editor
 
         public static bool Generate(GlueRecipeEntry recipe, GlueRecipeFile recipeFile)
         {
-            if (!TemplateFileMap.TryGetValue(recipe.template, out var fileName))
-                throw new InvalidOperationException($"未知模板: {recipe.template}");
+            var fileName = GetOutputFileName(recipe);
+            if (string.IsNullOrWhiteSpace(fileName))
+                throw new InvalidOperationException($"无法确定输出文件名: {recipe?.id}");
+
+            if (string.IsNullOrWhiteSpace(recipe.template))
+                throw new InvalidOperationException($"Recipe 缺少 template: {recipe.id}");
 
             var templatePath = Path.Combine(HubPaths.TemplatesDir, recipe.template + ".txt");
             if (!File.Exists(templatePath))
@@ -76,25 +87,25 @@ namespace TechCosmos.Hub.Editor
 
         public static void GenerateAllReady(PackageCatalogFile catalog, GlueRecipeFile recipeFile)
         {
-            var order = new[]
+            if (recipeFile?.recipes == null) return;
+
+            var generated = new HashSet<string>();
+            for (var pass = 0; pass < recipeFile.recipes.Length + 1; pass++)
             {
-                "integration-events",
-                "entity-registry",
-                "composition-root",
-                "cast-flow",
-                "entity-bridge",
-                "controller-input"
-            };
+                var any = false;
+                foreach (var recipe in recipeFile.recipes)
+                {
+                    if (recipe == null || generated.Contains(recipe.id)) continue;
 
-            foreach (var id in order)
-            {
-                var recipe = FindRecipe(recipeFile, id);
-                if (recipe == null) continue;
+                    var status = Evaluate(recipe, catalog, recipeFile);
+                    if (!status.CanGenerate) continue;
 
-                var status = Evaluate(recipe, catalog, recipeFile);
-                if (!status.CanGenerate) continue;
+                    Generate(recipe, recipeFile);
+                    generated.Add(recipe.id);
+                    any = true;
+                }
 
-                Generate(recipe, recipeFile);
+                if (!any) break;
             }
         }
 
@@ -109,8 +120,10 @@ namespace TechCosmos.Hub.Editor
         private static bool IsRecipeOutputPresent(string recipeId, GlueRecipeFile recipeFile)
         {
             var recipe = FindRecipe(recipeFile, recipeId);
-            if (recipe == null || !TemplateFileMap.TryGetValue(recipe.template, out var fileName))
-                return false;
+            if (recipe == null) return false;
+
+            var fileName = GetOutputFileName(recipe);
+            if (string.IsNullOrWhiteSpace(fileName)) return false;
 
             var path = Path.Combine(HubPaths.ProjectRoot, recipeFile.outputRoot, fileName);
             return File.Exists(path);
