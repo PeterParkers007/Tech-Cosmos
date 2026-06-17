@@ -1,59 +1,73 @@
 # 🚀 快速启动指南
 
-欢迎来到技术宇宙！本指南将帮助不同背景的访客找到最高效的探索路径。
+欢迎来到技术宇宙！本指南帮助不同背景的访客找到最高效的探索路径。
+
+## ⚡ 最快上手：安装 Hub
+
+1. 打开 Unity 项目 → **Package Manager** → **+** → **Add package from git URL**
+2. 粘贴：
+   ```
+   https://github.com/PeterParkers007/Tech-Cosmos.git?path=/Tech-Cosmos.Hub
+   ```
+3. 菜单 **Tech-Cosmos → Hub** 打开集成中枢
+4. 在「技术框架」页选择需要的包 → **导入**（支持 Git URL 或本地 `Assets/Framework` 目录）
+5. 可选：「胶水生成」页按条件生成 Adapter 样板；「项目结构」页一键创建 `_Game` 目录
+
+详见 [Tech-Cosmos.Hub/README.md](./Tech-Cosmos.Hub/README.md)
+
+---
 
 ## 🎯 面向不同访客的专属路径
 
 ### 技术总监 / 架构师 / 招聘者
-*（评估技术视野与架构能力）*
-1.  **第一印象**：阅读 [构建者宣言](./MANIFESTO.md) - 在5分钟内了解核心哲学与工程价值观。
-2.  **把握全局**：查看 [总架构图](./ARCHITECTURE.md) - 理解分层设计与“操作系统”概念的深层含义。
-3.  **考察深度**：浏览 [技术星图](./GALAXY.md) - 重点观察 **`RTS-MOBA-Control-System`** 的技术栈，这是体系复杂度的终极证明。
-4.  **验证实力**：深入 **`Unit-Core`** 与 **`RTS-OS`** 的独立仓库，查看代码规范与设计文档。
+1. [构建者宣言](./MANIFESTO.md) — 5 分钟了解工程价值观
+2. [总架构图](./ARCHITECTURE.md) — 零耦合 + Adapter 集成模型
+3. [技术星图](./GALAXY.md) — 全部卫星仓库与职责
+4. 深入 **SkillSystem**、**Unit-Core**、**ECS** 独立仓库阅读 README 与代码
 
 ### 开发者 / 技术合作者
-*（使用、学习或参与开发）*
-1.  **直接切入**：直达 [技术星图](./GALAXY.md)。
-2.  **精准定位**：根据您的需求选择模块：
-    - **追求性能** → `PoolSystem`, `UpdateManager`
-    - **关注架构** → `Unit-Core`, `CommandSystem`
-    - **研究AI** → `AI-OS`, `RTS-OS`
-    - **需要解决方案** → `WASD-OS` (移动), `RTS-OS` (战略)
-3.  **深入探索**：点击链接进入对应仓库，每个模块都提供完整的 `README.md`、示例场景和API文档。
+1. 安装 [Hub](./Tech-Cosmos.Hub/README.md)，按需导入包
+2. [技术星图](./GALAXY.md) 按需求选型：
+   - **性能** → PoolSystem, UpdateManager
+   - **架构** → Unit-Core, CommandSystem, Core 契约层
+   - **战斗技能** → SkillSystem（含 Buff）+ Targeting + Combat Adapter
+   - **AI** → AI-OS
+   - **输入** → Input-OS（命令映射）或 Framework Input（Intent 流）
+3. 在 `Assets/_Game/Adapters/` 完成跨包集成（或 Hub 生成胶水）
 
-### 同行
-*（进行思维碰撞与理念交流）*
-1.  **思想溯源**：阅读 [构建者宣言](./MANIFESTO.md) 和 [技术博客](./BLOG/)。
-2.  **参与构建**：查看 [贡献指南](./CONTRIBUTING.md)，您的思想同样可以成为技术宇宙的一部分。
-
-## 🗺️ 推荐探索顺序
-
-### 30分钟快速了解
-1.  [构建者宣言](./MANIFESTO.md) *(5分钟)*
-2.  [总架构图](./ARCHITECTURE.md) *(10分钟)*
-3.  [技术星图](./GALAXY.md) - 重点阅读 **加粗** 的核心价值部分 *(15分钟)*
-
-### 2小时深度探索
-1.  [构建者宣言](./MANIFESTO.md) *(10分钟)*
-2.  [总架构图](./ARCHITECTURE.md) *(20分钟)*
-3.  [技术星图](./GALAXY.md) - 完整阅读，理解模块间依赖 *(40分钟)*
-4.  [技术博客](./BLOG/) - 选择1-2篇阅读 *(30分钟)*
-5.  [发展路线图](./ROADMAP.md) *(20分钟)*
-
-## 🛠️ 环境准备
-
-所有技术模块均基于以下环境构建，建议保持一致以获得最佳体验：
-- **引擎**: Unity 2022.3 LTS 或更高版本
-- **.NET**: 4.x 或更高版本
-- **平台**: 支持 Windows, macOS, Linux
-
-## ⚡ 即刻体验
-
-想要立即获得成就感？推荐从这两个基石开始：
-
-1.  **[PoolSystem](https://github.com/yourname/PoolSystem)** - 解决性能问题的首选，效果立竿见影。
-2.  **[Unit-Core](https://github.com/yourname/Unit-Core)** - 理解整个技术宇宙实体设计哲学的起点。
+### 同行 / 共建者
+1. [构建者宣言](./MANIFESTO.md) + [时间线](./TIMELINE.md)
+2. [贡献指南](./CONTRIBUTING.md)
 
 ---
 
-*探索愉快，未来的建造者！如有任何疑问，文档是您的第一伙伴，或者通过 [联系我们](./LINKS.md) 发起讨论。*
+## 🗺️ 推荐探索顺序
+
+### 30 分钟
+1. [构建者宣言](./MANIFESTO.md) *(5 分钟)*
+2. [总架构图](./ARCHITECTURE.md) *(10 分钟)*
+3. [技术星图](./GALAXY.md) 核心价值部分 *(15 分钟)*
+
+### 2 小时
+1. 宣言 + 架构 + 星图完整阅读 *(70 分钟)*
+2. 安装 Hub，导入 PoolSystem + Unit-Core 试用 *(30 分钟)*
+3. [发展路线图](./ROADMAP.md) *(20 分钟)*
+
+---
+
+## 🛠️ 环境准备
+
+- **Unity**: 2022.3 LTS 或更高
+- **.NET**: 4.x+
+- **平台**: Windows / macOS / Linux
+
+## 📦 两种包管理方式
+
+| 方式 | 适用场景 |
+|------|----------|
+| **Hub + Git URL** | 按需安装，manifest 由 Hub 管理（推荐） |
+| **本地 monorepo** | 全部包放在 `Assets/Framework/`，manifest 使用 `file:` 路径 |
+
+---
+
+*探索愉快！疑问请通过 [联系我们](./LINKS.md) 发起讨论。*

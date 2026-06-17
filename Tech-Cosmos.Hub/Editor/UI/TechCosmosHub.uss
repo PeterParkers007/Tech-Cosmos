@@ -1,0 +1,603 @@
+/* Tech-Cosmos Hub — Web-style dashboard theme */
+
+.hub-root {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-direction: column;
+    min-height: 0;
+    background-color: rgb(22, 24, 30);
+}
+
+/* ── Header ── */
+.hub-header {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 14px 20px;
+    background-color: rgb(28, 32, 42);
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(45, 50, 64);
+}
+
+.hub-header-brand {
+    flex-direction: column;
+    flex-shrink: 1;
+    min-width: 0;
+    margin-right: 24px;
+}
+
+.hub-title {
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: rgb(235, 240, 250);
+    margin: 0;
+    padding: 0;
+}
+
+.hub-subtitle {
+    font-size: 11px;
+    color: rgb(130, 140, 160);
+    margin-top: 2px;
+    white-space: normal;
+}
+
+.hub-stats {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-right: auto;
+}
+
+.hub-header--compact .hub-stats {
+    margin-right: 0;
+    margin-top: 8px;
+}
+
+.hub-header--stacked {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.hub-header--stacked .hub-header-actions {
+    margin-top: 8px;
+    width: 100%;
+}
+
+.hub-stat-chip {
+    flex-direction: row;
+    align-items: center;
+    background-color: rgb(38, 42, 54);
+    border-radius: 12px;
+    padding: 4px 10px;
+    margin-right: 8px;
+}
+
+.hub-stat-value {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: rgb(220, 228, 240);
+    margin-right: 4px;
+}
+
+.hub-stat-label {
+    font-size: 10px;
+    color: rgb(120, 130, 148);
+}
+
+.hub-header-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* ── Tabs ── */
+.hub-tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    padding: 10px 20px 0 20px;
+    background-color: rgb(22, 24, 30);
+}
+
+.hub-tab {
+    height: 32px;
+    padding-left: 16px;
+    padding-right: 16px;
+    margin-right: 6px;
+    border-width: 0;
+    border-radius: 8px 8px 0 0;
+    background-color: transparent;
+    color: rgb(140, 148, 168);
+    font-size: 12px;
+    -unity-font-style: normal;
+}
+
+.hub-tab:hover {
+    background-color: rgb(36, 40, 52);
+    color: rgb(200, 208, 220);
+}
+
+.hub-tab--active {
+    background-color: rgb(36, 40, 52);
+    color: rgb(100, 165, 255);
+    -unity-font-style: bold;
+    border-bottom-width: 2px;
+    border-bottom-color: rgb(79, 140, 255);
+}
+
+/* ── Body split ── */
+.hub-body {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 100px;
+    flex-direction: row;
+    padding: 0 12px 12px 12px;
+}
+
+.hub-body--narrow {
+    flex-direction: column;
+}
+
+.hub-body--narrow .hub-sidebar {
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    max-height: 200px;
+    margin-right: 0;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.hub-body--narrow .hub-detail {
+    min-height: 200px;
+}
+
+.hub-sidebar {
+    width: 280px;
+    min-width: 200px;
+    max-width: 320px;
+    flex-shrink: 0;
+    flex-grow: 0;
+    flex-direction: column;
+    min-height: 0;
+    background-color: rgb(30, 33, 42);
+    border-radius: 10px;
+    margin-right: 10px;
+    padding: 12px;
+    border-width: 1px;
+    border-color: rgb(45, 50, 62);
+}
+
+.hub-sidebar-search {
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background-color: rgb(24, 27, 35);
+    border-color: rgb(50, 56, 70);
+}
+
+.hub-sidebar-search > TextInput {
+    background-color: transparent;
+    border-width: 0;
+    color: rgb(210, 216, 228);
+    font-size: 12px;
+}
+
+.hub-sidebar-scroll {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 40px;
+}
+
+.hub-detail {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background-color: rgb(30, 33, 42);
+    border-radius: 10px;
+    padding: 20px;
+    border-width: 1px;
+    border-color: rgb(45, 50, 62);
+}
+
+.hub-detail-top {
+    flex-shrink: 0;
+    flex-direction: column;
+}
+
+.hub-detail-bottom {
+    flex-shrink: 0;
+    flex-direction: column;
+    margin-top: 8px;
+}
+
+.hub-detail-scroll {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 60px;
+    margin-top: 4px;
+}
+
+/* ── Category & list items ── */
+.hub-category-label {
+    font-size: 10px;
+    -unity-font-style: bold;
+    color: rgb(100, 110, 130);
+    margin-top: 10px;
+    margin-bottom: 4px;
+    padding-left: 4px;
+    letter-spacing: 1px;
+}
+
+.hub-list-item {
+    flex-direction: row;
+    align-items: center;
+    min-height: 32px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    padding-left: 10px;
+    padding-right: 8px;
+    margin-bottom: 2px;
+    border-radius: 8px;
+    background-color: transparent;
+    border-left-width: 3px;
+    border-left-color: transparent;
+}
+
+.hub-list-item:hover {
+    background-color: rgb(40, 44, 56);
+}
+
+.hub-list-item--selected {
+    background-color: rgb(42, 52, 72);
+    border-left-color: rgb(79, 140, 255);
+}
+
+.hub-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.hub-status-dot--installed {
+    background-color: rgb(62, 207, 142);
+}
+
+.hub-status-dot--local {
+    background-color: rgb(245, 166, 35);
+}
+
+.hub-status-dot--missing {
+    background-color: rgb(90, 98, 115);
+}
+
+.hub-list-item-name {
+    font-size: 12px;
+    color: rgb(210, 216, 228);
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    -unity-text-align: middle-left;
+    white-space: normal;
+    overflow: hidden;
+}
+
+.hub-list-item--selected .hub-list-item-name {
+    color: rgb(235, 240, 255);
+    -unity-font-style: bold;
+}
+
+/* ── Detail panel ── */
+.hub-detail-header {
+    flex-direction: row;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.hub-detail-title-block {
+    flex-grow: 1;
+}
+
+.hub-detail-title {
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: rgb(240, 244, 252);
+    margin: 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.hub-detail-desc {
+    font-size: 12px;
+    color: rgb(150, 160, 178);
+    margin-top: 6px;
+    white-space: normal;
+}
+
+.hub-detail-meta {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.hub-chip {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    margin-right: 6px;
+    margin-bottom: 4px;
+    background-color: rgb(45, 50, 64);
+    color: rgb(160, 170, 190);
+    white-space: normal;
+}
+
+.hub-chip--category {
+    background-color: rgb(55, 65, 95);
+    color: rgb(140, 175, 255);
+}
+
+.hub-badge {
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 10px;
+    -unity-font-style: bold;
+}
+
+.hub-badge--installed {
+    background-color: rgba(62, 207, 142, 0.18);
+    color: rgb(62, 207, 142);
+}
+
+.hub-badge--local {
+    background-color: rgba(245, 166, 35, 0.18);
+    color: rgb(245, 166, 35);
+}
+
+.hub-badge--missing {
+    background-color: rgba(120, 130, 150, 0.15);
+    color: rgb(130, 140, 155);
+}
+
+.hub-badge--ready {
+    background-color: rgba(62, 207, 142, 0.18);
+    color: rgb(62, 207, 142);
+}
+
+.hub-badge--pending {
+    background-color: rgba(245, 166, 35, 0.15);
+    color: rgb(245, 166, 35);
+}
+
+/* ── Buttons ── */
+.hub-btn {
+    height: 32px;
+    padding-left: 14px;
+    padding-right: 14px;
+    margin-left: 6px;
+    border-radius: 8px;
+    border-width: 1px;
+    font-size: 11px;
+}
+
+.hub-btn--primary {
+    background-color: rgb(79, 140, 255);
+    border-color: rgb(90, 150, 255);
+    color: white;
+}
+
+.hub-btn--primary:hover {
+    background-color: rgb(100, 155, 255);
+}
+
+.hub-btn--primary:disabled {
+    background-color: rgb(50, 58, 75);
+    border-color: rgb(55, 62, 78);
+    color: rgb(100, 108, 125);
+}
+
+.hub-btn--danger {
+    background-color: transparent;
+    border-color: rgb(200, 80, 80);
+    color: rgb(230, 120, 120);
+}
+
+.hub-btn--ghost {
+    background-color: rgb(40, 44, 56);
+    border-color: rgb(55, 60, 74);
+    color: rgb(180, 188, 205);
+}
+
+.hub-btn--ghost:hover {
+    background-color: rgb(50, 54, 68);
+}
+
+.hub-btn--accent {
+    background-color: rgb(50, 120, 90);
+    border-color: rgb(62, 140, 105);
+    color: white;
+}
+
+.hub-btn-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 14px;
+}
+
+.hub-btn-row > .hub-btn {
+    margin-top: 4px;
+    flex-shrink: 0;
+}
+
+.hub-btn-row > .hub-btn:first-child {
+    margin-left: 0;
+}
+
+.hub-header-actions > .hub-btn {
+    margin-top: 4px;
+}
+
+.hub-header-actions > .hub-btn:first-child {
+    margin-left: 0;
+}
+
+/* ── README card ── */
+.hub-readme-card {
+    background-color: rgb(24, 27, 35);
+    border-radius: 10px;
+    padding: 16px;
+    border-width: 1px;
+    border-color: rgb(42, 48, 60);
+    margin-top: 8px;
+}
+
+.hub-section-title {
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: rgb(120, 130, 150);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.hub-readme-text {
+    font-size: 12px;
+    color: rgb(185, 192, 210);
+    white-space: normal;
+}
+
+/* ── Glue checklist ── */
+.hub-checklist {
+    margin-top: 8px;
+}
+
+.hub-check-item {
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 0;
+}
+
+.hub-check-icon {
+    width: 18px;
+    font-size: 12px;
+    -unity-font-style: bold;
+    margin-right: 8px;
+}
+
+.hub-check-icon--ok {
+    color: rgb(62, 207, 142);
+}
+
+.hub-check-icon--fail {
+    color: rgb(220, 90, 90);
+}
+
+.hub-check-label {
+    font-size: 11px;
+    color: rgb(170, 178, 195);
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    white-space: normal;
+}
+
+.hub-field-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 6px;
+}
+
+.hub-field-label {
+    width: 72px;
+    min-width: 72px;
+    flex-shrink: 0;
+    font-size: 11px;
+    color: rgb(130, 138, 155);
+}
+
+.hub-body--narrow .hub-field-row {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.hub-body--narrow .hub-field-label {
+    width: auto;
+    min-width: 0;
+    margin-bottom: 4px;
+}
+
+.hub-field-input {
+    flex-grow: 1;
+    height: 26px;
+    background-color: rgb(24, 27, 35);
+    border-color: rgb(50, 56, 70);
+    color: rgb(210, 216, 228);
+    border-radius: 6px;
+}
+
+.hub-empty-state {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.hub-empty-text {
+    font-size: 13px;
+    color: rgb(120, 130, 148);
+    -unity-text-align: middle-center;
+}
+
+.hub-warning-box {
+    background-color: rgba(245, 166, 35, 0.1);
+    border-width: 1px;
+    border-color: rgba(245, 166, 35, 0.35);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 10px;
+}
+
+.hub-warning-text {
+    font-size: 11px;
+    color: rgb(230, 180, 100);
+    white-space: normal;
+}
+
+.hub-sidebar-footer {
+    flex-shrink: 0;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top-width: 1px;
+    border-top-color: rgb(45, 50, 62);
+}
+
+.hub-sidebar-hint {
+    font-size: 10px;
+    color: rgb(100, 110, 128);
+    -unity-text-align: middle-center;
+    margin-bottom: 6px;
+}
+
+.hub-tree-root {
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: rgb(120, 180, 255);
+    margin-top: 4px;
+}
+
+.hub-tree-item {
+    font-size: 11px;
+    color: rgb(160, 170, 190);
+    margin-left: 4px;
+}
+
+.hub-toggle {
+    color: rgb(200, 208, 220);
+}

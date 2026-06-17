@@ -1,0 +1,102 @@
+{
+  "defaultRoot": "Assets/_Game",
+  "presets": [
+    {
+      "id": "minimal",
+      "displayName": "精简",
+      "description": "最小业务目录：Adapter + 脚本 + 资源 + 场景 + 生成物。适合原型或小型项目。",
+      "root": "Assets/_Game",
+      "folders": [
+        "Adapters",
+        "Scripts",
+        "Resources",
+        "Scenes",
+        "Generated"
+      ]
+    },
+    {
+      "id": "standard",
+      "displayName": "标准（推荐）",
+      "description": "Tech-Cosmos 推荐结构：Adapters 集成层、Scripts 分类、Resources/Art/Audio、Generated 代码生成输出。",
+      "root": "Assets/_Game",
+      "folders": [
+        "Adapters",
+        "Scripts/Units",
+        "Scripts/Mechanisms",
+        "Scripts/Conditions",
+        "Scripts/Systems",
+        "Scripts/UI",
+        "Resources/Skills",
+        "Resources/Buffs",
+        "Resources/Config",
+        "Resources/Data",
+        "Art/Models",
+        "Art/Textures",
+        "Art/Materials",
+        "Art/VFX",
+        "Art/UI",
+        "Audio/BGM",
+        "Audio/SFX",
+        "Prefabs/Characters",
+        "Prefabs/Environment",
+        "Prefabs/UI",
+        "Scenes",
+        "Generated/Hub",
+        "Generated/Mechanisms",
+        "Generated/Conditions",
+        "Generated/SkillDataSO",
+        "Editor"
+      ]
+    },
+    {
+      "id": "full",
+      "displayName": "完整",
+      "description": "标准结构 + 网络/本地化/测试/StreamingAssets。适合中大型商业项目。",
+      "root": "Assets/_Game",
+      "folders": [
+        "Adapters",
+        "Scripts/Units",
+        "Scripts/Mechanisms",
+        "Scripts/Conditions",
+        "Scripts/Systems",
+        "Scripts/UI",
+        "Scripts/Network",
+        "Scripts/Data",
+        "Resources/Skills",
+        "Resources/Buffs",
+        "Resources/Config",
+        "Resources/Data",
+        "Resources/Localization",
+        "Resources/Prefabs",
+        "Art/Models",
+        "Art/Textures",
+        "Art/Materials",
+        "Art/VFX",
+        "Art/UI",
+        "Art/Animations",
+        "Art/Shaders",
+        "Audio/BGM",
+        "Audio/SFX",
+        "Prefabs/Characters",
+        "Prefabs/Environment",
+        "Prefabs/UI",
+        "Prefabs/Effects",
+        "Scenes",
+        "Settings",
+        "Generated/Hub",
+        "Generated/Mechanisms",
+        "Generated/Conditions",
+        "Generated/SkillDataSO",
+        "Editor",
+        "Tests/EditMode",
+        "Tests/PlayMode"
+      ],
+      "extraRoots": [
+        {
+          "root": "Assets/StreamingAssets",
+          "folders": ["Config", "Localization", "Bundles"]
+        }
+      ]
+    }
+  ]
+}

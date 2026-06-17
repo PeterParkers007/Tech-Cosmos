@@ -1,0 +1,28 @@
+{
+  "name": "com.techcosmos.hub",
+  "version": "1.1.0",
+  "displayName": "Tech-Cosmos Hub",
+  "description": "Tech-Cosmos 集成中枢：浏览框架、Git/本地导入 UPM、条件生成胶水、一键生成项目目录结构。不引用任何卫星框架 asmdef。",
+  "unity": "2022.3",
+  "unityRelease": "0f1",
+  "keywords": [
+    "tech-cosmos",
+    "hub",
+    "integration",
+    "package-manager",
+    "editor-tool"
+  ],
+  "category": "Editor",
+  "author": {
+    "name": "Tech-Cosmos",
+    "email": "3427463164@qq.com",
+    "url": "https://github.com/PeterParkers007"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PeterParkers007/Tech-Cosmos.git",
+    "directory": "Tech-Cosmos.Hub"
+  },
+  "documentationUrl": "https://github.com/PeterParkers007/Tech-Cosmos/tree/main/Tech-Cosmos.Hub",
+  "licensesUrl": "https://github.com/PeterParkers007/Tech-Cosmos/blob/main/LICENSE"
+}

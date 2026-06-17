@@ -1,0 +1,208 @@
+{
+  "frameworkRoot": "Assets/Framework",
+  "packages": [
+    {
+      "id": "com.techcosmos.hub",
+      "folder": "Tech-Cosmos.Hub",
+      "displayName": "Tech-Cosmos Hub",
+      "category": "Hub",
+      "description": "集成中枢：浏览框架、Git/本地导入 UPM、条件胶水、项目结构脚手架",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.git?path=/Tech-Cosmos.Hub"
+    },
+    {
+      "id": "com.techcosmos.core",
+      "folder": "Tech-Cosmos.Framework.Core",
+      "displayName": "Core",
+      "category": "Foundation",
+      "description": "Float3、EntityHandle、Blackboard — 引擎无关基础契约（解耦层）"
+    },
+    {
+      "id": "com.techcosmos.inputsystem",
+      "folder": "Tech-Cosmos.Framework.InputSystem",
+      "displayName": "Input System (Intent)",
+      "category": "Framework",
+      "description": "InputIntent 意图流，配合 Targeting / Skill（解耦层）"
+    },
+    {
+      "id": "com.techcosmos.targetingsystem",
+      "folder": "Tech-Cosmos.Framework.TargetingSystem",
+      "displayName": "Targeting System",
+      "category": "Framework",
+      "description": "TargetRequest → TargetResult 选目标（解耦层）"
+    },
+    {
+      "id": "com.techcosmos.eventbus",
+      "folder": "Tech-Cosmos.Framework.EventBus",
+      "displayName": "Event Bus",
+      "category": "Framework",
+      "description": "类型安全事件总线（解耦层）"
+    },
+    {
+      "id": "com.techcosmos.combatsystem",
+      "folder": "Tech-Cosmos.Framework.CombatSystem",
+      "displayName": "Combat System",
+      "category": "Framework",
+      "description": "DamageRequest / Heal 战斗契约（解耦层）"
+    },
+    {
+      "id": "com.techcosmos.skillsystem",
+      "folder": "Tech-Cosmos.Framework.SkillSystem",
+      "displayName": "Skill System",
+      "category": "Framework",
+      "description": "六层技能 + 内置 GBF Buff + Graph 编辑器",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.SkillSystem.git"
+    },
+    {
+      "id": "com.tech-cosmos.ecs",
+      "folder": "Tech-Cosmos.Framework.ECS",
+      "displayName": "Entity-OS (ECS)",
+      "category": "Framework",
+      "description": "实体组件系统",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.ECS.git"
+    },
+    {
+      "id": "com.resourcemanager.core",
+      "folder": "Tech-Cosmos.Framework.ResourceManager",
+      "displayName": "Resource Manager",
+      "category": "Framework",
+      "description": "Resources ↔ Addressables 可切换资源管理",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.ResourceManager.git"
+    },
+    {
+      "id": "com.tech-cosmos.unitcore",
+      "folder": "Tech-Cosmos.Component.UnitCore",
+      "displayName": "Unit Core",
+      "category": "Component",
+      "description": "工业级单位核心",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Component.UnitCore.git"
+    },
+    {
+      "id": "com.techcosmos.command-system",
+      "folder": "Tech-Cosmos.Component.CommandSystem",
+      "displayName": "Command System",
+      "category": "Component",
+      "description": "命令队列与即时执行",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Component.CommandSystem.git"
+    },
+    {
+      "id": "com.tech-cosmos.universalselection",
+      "folder": "Tech-Cosmos.Component.UniversalSelection",
+      "displayName": "Universal Selection",
+      "category": "Component",
+      "description": "框选、多选框架",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Component.UniversalSelection.git"
+    },
+    {
+      "id": "com.techcosmos.aios",
+      "folder": "Tech-Cosmos.Component.AI-OS",
+      "displayName": "AI-OS",
+      "category": "Component",
+      "description": "效用理论 AI 决策",
+      "gitUrl": "https://github.com/PeterParkers007/TechCosmos.Component.AI-OS.git"
+    },
+    {
+      "id": "com.tech-cosmos.serializationkit",
+      "folder": "Tech-Cosmos.Infra.Serialization",
+      "displayName": "Serialization Kit",
+      "category": "Infra",
+      "description": "配置序列化与 DataPipeline",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Infra.Serialization.git"
+    },
+    {
+      "id": "com.tech-cosmos.loggingsystem",
+      "folder": "Tech-Cosmos.Infra.LoggingSystem",
+      "displayName": "Logging System",
+      "category": "Infra",
+      "description": "分级结构化日志",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Infra.LoggingSystem.git"
+    },
+    {
+      "id": "com.tech-cosmos.poolsystem",
+      "folder": "Tech-Cosmos.Runtime.PoolSystem",
+      "displayName": "Pool System",
+      "category": "Runtime",
+      "description": "对象池",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Runtime.PoolSystem.git"
+    },
+    {
+      "id": "com.peterparkers.updatemanager",
+      "folder": "Tech-Cosmos.Runtime.UpdateManager",
+      "displayName": "Update Manager",
+      "category": "Runtime",
+      "description": "Update 生命周期优化",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Runtime.Update.git"
+    },
+    {
+      "id": "com.tech-cosmos.toolbox",
+      "folder": "Tech-Cosmos.Runtime.ToolBox",
+      "displayName": "ToolBox",
+      "category": "Runtime",
+      "description": "单例等工具",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Runtime.ToolBox.git"
+    },
+    {
+      "id": "com.tech-cosmos.animation-kit",
+      "folder": "Tech-Cosmos.Runtime.Animation",
+      "displayName": "UI Animation",
+      "category": "Runtime",
+      "description": "UI 动画插值",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Runtime.Animation.git"
+    },
+    {
+      "id": "com.techcosmos.factionforge",
+      "folder": "Tech-Cosmos.Runtime.FactionForge",
+      "displayName": "Faction Forge",
+      "category": "Runtime",
+      "description": "阵营关系矩阵",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Runtime.FactionForge.git"
+    },
+    {
+      "id": "com.tech-cosmos.initialization-dependency-analyzer",
+      "folder": "Tech-Cosmos.Runtime.InitializationDependencyAnalyzer",
+      "displayName": "Init Analyzer",
+      "category": "Runtime",
+      "description": "模块初始化顺序",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Runtime.InitializationDependencyAnalyzer.git"
+    },
+    {
+      "id": "com.hovermodule.core",
+      "folder": "Tech-Cosmos.Module.MouseHover",
+      "displayName": "Mouse Hover",
+      "category": "Module",
+      "description": "高性能悬停检测",
+      "gitUrl": "https://github.com/PeterParkers007/TechCosmos.TMoudle.MouseHover.git"
+    },
+    {
+      "id": "com.techcosmos.mapping-manager",
+      "folder": "Tech-Cosmos.Module.MappingManager",
+      "displayName": "Mapping Manager",
+      "category": "Module",
+      "description": "类型安全双向映射",
+      "gitUrl": "https://github.com/PeterParkers007/TechCosmos.TMoudle.MappingManager.git"
+    },
+    {
+      "id": "com.tech-cosmos.asset-bundle-builder",
+      "folder": "Tech-Cosmos.Pipeline.AssetBundleBuilder",
+      "displayName": "AssetBundle Builder",
+      "category": "Pipeline",
+      "description": "AB 智能构建",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Pipeline.AssetBundleBuilder.git"
+    },
+    {
+      "id": "com.magicstringeliminator",
+      "folder": "Tech-Cosmos.Tool.MSE",
+      "displayName": "MSE",
+      "category": "Tool",
+      "description": "魔法字符串枚举生成",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Tool.MSE.git"
+    },
+    {
+      "id": "com.techcosmos.input-system",
+      "folder": "Tech-Cosmos.OS.InputSystem",
+      "displayName": "OS Input (Command Map)",
+      "category": "OS",
+      "description": "MOBA 命令映射输入，与 Intent 输入双轨并存",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.OS.InputSystem.git"
+    }
+  ]
+}

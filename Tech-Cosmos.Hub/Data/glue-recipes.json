@@ -1,0 +1,53 @@
+{
+  "outputRoot": "Assets/_Game/Generated/Hub",
+  "recipes": [
+    {
+      "id": "integration-events",
+      "displayName": "集成事件定义",
+      "description": "CastRequested / CastConfirmed 等项目层 EventBus 事件 struct",
+      "requires": ["com.techcosmos.core", "com.techcosmos.eventbus"],
+      "template": "IntegrationEvents"
+    },
+    {
+      "id": "entity-registry",
+      "displayName": "实体注册表",
+      "description": "EntityHandle ↔ Transform / 战斗接口",
+      "requires": ["com.techcosmos.core", "com.techcosmos.combatsystem"],
+      "template": "GameEntityRegistry"
+    },
+    {
+      "id": "composition-root",
+      "displayName": "组合根",
+      "description": "持有 InputHub / TargetingHub / CombatHub / EventBus 单例",
+      "requires": ["com.techcosmos.core", "com.techcosmos.inputsystem", "com.techcosmos.targetingsystem", "com.techcosmos.combatsystem", "com.techcosmos.eventbus"],
+      "dependsOnRecipes": ["entity-registry"],
+      "template": "GameCompositionRoot"
+    },
+    {
+      "id": "cast-flow",
+      "displayName": "施法流 Adapter",
+      "description": "InputIntent → Target → SkillContext → TriggerEvent",
+      "requires": ["com.techcosmos.core", "com.techcosmos.inputsystem", "com.techcosmos.targetingsystem", "com.techcosmos.skillsystem", "com.techcosmos.eventbus"],
+      "dependsOnRecipes": ["composition-root", "integration-events"],
+      "template": "CastFlowAdapter",
+      "needsHeroType": true
+    },
+    {
+      "id": "entity-bridge",
+      "displayName": "实体桥接组件",
+      "description": "MonoBehaviour 桥：EntityHandle + Combat + Hero",
+      "requires": ["com.techcosmos.core", "com.techcosmos.combatsystem", "com.techcosmos.skillsystem"],
+      "dependsOnRecipes": ["composition-root", "entity-registry"],
+      "template": "GameEntityBridge",
+      "needsHeroType": true
+    },
+    {
+      "id": "controller-input",
+      "displayName": "控制器输入源",
+      "description": "Unity 键盘 → InputIntent",
+      "requires": ["com.techcosmos.core", "com.techcosmos.inputsystem"],
+      "dependsOnRecipes": ["composition-root"],
+      "template": "ControllerInputSource"
+    }
+  ]
+}

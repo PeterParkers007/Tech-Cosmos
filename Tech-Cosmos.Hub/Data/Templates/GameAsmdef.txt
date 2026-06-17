@@ -1,0 +1,17 @@
+{
+    "name": "TechCosmos.Game",
+    "rootNamespace": "TechCosmos.Game",
+    "references": [
+        "TechCosmos.Core.Runtime",
+        "TechCosmos.SkillSystem.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,78 +1,104 @@
 # 总架构图 (The Architecture)
 
-本技术宇宙采用严格的分层架构，下层是上层的基石，上层是下层的价值体现。依赖关系单向流动，确保系统的稳定与可维护性。
+本技术宇宙采用严格的分层架构。各 **Framework 卫星包互不 asmdef 引用**；跨包协作只在 **项目 Adapter 层** 完成。`Tech-Cosmos Hub` 负责浏览、安装与脚手架，不参与运行时逻辑。
 
 ## 系统架构概览
 
 ```mermaid
 graph TB
-    A[工具层] --> B[组件层]
-    B --> C[通用操作系统]
-    C --> D[领域操作系统]
-    D --> E[应用系统层]
-    
-    subgraph A [工具层 - 原子能力]
-        A1[SerializationKit]
-        A2[PoolSystem]
-        A3[UpdateManager]
-        A4[AnimationLerper]
+    subgraph HubLayer [集成层 - Editor Only]
+        H[Tech-Cosmos Hub]
     end
-    
-    subgraph B [组件层 - 业务模块]
+
+    subgraph Contract [解耦契约层]
+        C1[Core]
+        C2[EventBus]
+        C3[Input Intent]
+        C4[Targeting]
+        C5[Combat]
+    end
+
+    subgraph Tools [工具链]
+        T1[SerializationKit]
+        T2[PoolSystem]
+        T3[UpdateManager]
+        T4[MSE]
+    end
+
+    subgraph Components [组件层]
         B1[Unit-Core]
         B2[CommandSystem]
-        B3[InventorySystem]
+        B3[UniversalSelection]
     end
-    
-    subgraph C [通用操作系统 - 跨领域服务]
-        C1[Entity-OS]
-        C2[Input-OS]
-        C3[AI-OS]
+
+    subgraph Framework [框架 / OS]
+        F1[SkillSystem + GBF Buff]
+        F2[Entity-OS ECS]
+        F3[AI-OS]
+        F4[Input-OS Command Map]
+        F5[ResourceManager]
     end
-    
-    subgraph D [领域操作系统 - 垂直领域内核]
-        D1[RTS-OS]
-        D2[WASD-OS]
+
+    subgraph Game [你的项目]
+        A[Adapters _Game]
+        G[Gameplay / Content]
     end
-    
-    subgraph E [应用系统层 - 具体实现]
-        E1[RTS-MOBA-Control]
-        E2[ARPG-Combat-Demo]
-    end
+
+    H -.->|安装/浏览| Tools
+    H -.->|安装/浏览| Components
+    H -.->|安装/浏览| Framework
+    Contract --> Framework
+    Tools --> Components
+    Components --> Framework
+    Contract --> A
+    Framework --> A
+    A --> G
 ```
+
 **架构解读**：
-- **工具层** 提供不可再分的原子能力，是所有创造的原材料。
-- **组件层** 将原子能力组合成可复用的业务功能模块。
-- **通用OS** 提供任何游戏类型都可能需要的底层服务。
-- **领域OS** 整合通用OS与组件，封装特定游戏类型的全部复杂性，提供“开箱即用”的完整解决方案。
-- **应用系统层** 基于领域OS，快速构建出具体的、可交付的玩法体验。
+
+- **Hub 层**：编辑器工具，管理 manifest、README 浏览、胶水生成、目录脚手架。
+- **解耦契约层**：`Float3`、`EntityHandle`、事件、输入意图、选目标、伤害请求等**无业务**原语；各包零互引。
+- **工具链**：不可再分的原子能力（序列化、对象池、日志、编辑器工具）。
+- **组件层**：可复用业务模块（单位核心、命令系统、选择框架）。
+- **框架/OS 层**：技能、ECS、AI、资源等领域内核。
+- **Adapter 层**：项目中**唯一**同时认识多方的代码；可手写或由 Hub 条件生成。
 
 ## 核心设计理念
 
-### 1. 单向依赖原则
-依赖关系永远向下，禁止循环依赖。下层对上层无感知，确保核心稳定性。
+### 1. 零耦合原则
+Framework 包之间 **禁止** 互相 `asmdef references`。需要协作时，通过 Core 契约类型 + 项目 Adapter 传递。
 
-### 2. 接口契约原则
-层与层之间通过明确定义的接口通信。接口即法律，任何变更都需要严格的架构评审。
+### 2. 单向依赖原则
+运行时依赖从上层流向 Adapter 与契约，禁止循环依赖。
 
-### 3. 封装与复用演进
-- **工具层**：解决“怎么做” - 封装技术复杂性。
-- **组件层**：解决“做什么” - 封装业务逻辑。
-- **操作系统层**：解决“在哪用” - 封装领域复杂性，实现最高级别的复用。
+### 3. 接口契约原则
+层与层之间通过明确定义的类型通信（如 `InputIntent`、`TargetRequest`、`DamageRequest`）。
 
-## 技术实现规范
+### 4. Hub 不污染运行时
+Hub 程序集仅 Editor，不引用 SkillSystem / ECS 等卫星包，保持安装器纯净。
 
-### 数据流
-1. **配置数据** 通过 `ConfigEditor`（工具层）生成。
-2. 由 `SerializationKit`（工具层）统一序列化。
-3. 运行时由 **组件层** 和 **操作系统层** 的模块消费。
-4. 状态变更通过事件系统通知，遵循观察者模式。
+## 典型数据流（战斗技能栈）
 
-### 生命周期管理
-- **工具层**：在应用程序启动时初始化，常驻内存。
-- **组件层**：在游戏场景加载时注册和实例化。
-- **操作系统层**：按需懒加载，动态提供服务。
-- **应用系统层**：由玩家交互或游戏流程触发激活。
+```
+玩家输入 → InputIntent (Framework.Input)
+         → TargetRequest / TargetResult (Targeting)
+         → SkillSystem 施法
+         → DamageRequest (Combat)
+         → UnitCore / ECS 实体响应
+```
+
+上述链路在 **`_Game/Adapters/`** 中接线，而非在框架包内部互相引用。
+
+## 生命周期
+
+| 层级 | 生命周期 |
+|------|----------|
+| Hub | 编辑器会话；修改 manifest / 生成胶水 |
+| 工具链 | 应用启动时初始化，常驻 |
+| 组件/框架 | 场景加载时注册，按需激活 |
+| Adapter | 组合根启动时装配依赖 |
 
 ---
+
 *架构的终极目标不是约束，而是为无限的创造力提供一个坚实、可预测的舞台。*

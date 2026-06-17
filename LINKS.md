@@ -1,31 +1,41 @@
 # 🔗 链接与联系
 
 ## 🌐 核心阵地
-*   **[GitHub 主页](https://github.com/PeterParkers007)** - **技术宇宙的绝对中心**，所有代码、文档与演进历程均在于此。
+
+*   **[GitHub 主页](https://github.com/PeterParkers007)** — 技术宇宙中心，全部卫星仓库入口
+*   **[Tech-Cosmos 本仓库](https://github.com/PeterParkers007/Tech-Cosmos)** — 宣言、架构、星图 + **Hub 安装包**
+*   **[技术星图](./GALAXY.md)** — 全部模块索引
+
+## 🧭 快速安装 Hub
+
+```
+https://github.com/PeterParkers007/Tech-Cosmos.git?path=/Tech-Cosmos.Hub
+```
 
 ## 💬 技术交流
-*   **QQ**：`[3427463164]` *（添加时请备注来意）*
+
+*   **QQ**：`3427463164`（添加请备注来意）
 
 ## 📧 联系与合作
 
-### 商务合作与正式交流
-*   **邮箱**: `[3427463164@qq.com]`
+*   **邮箱**：`3427463164@qq.com`
 
 ### 技术讨论（首选）
-*   **[GitHub Issues](https://github.com/你的用户名/Universe-Core/issues)** - **公开技术讨论**，便于知识沉淀与社区共享。
-*   **[GitHub Discussions](https://github.com/你的用户名/Universe-Core/discussions)** - **开放式问答与思想碰撞**。
+
+*   **[GitHub Issues](https://github.com/PeterParkers007/Tech-Cosmos/issues)** — 公开技术讨论与问题反馈
+*   **[GitHub Discussions](https://github.com/PeterParkers007/Tech-Cosmos/discussions)** — 开放式问答
+
+各卫星仓库亦可在对应项目下提 Issue。
 
 ## 🤝 支持技术宇宙
 
-如果这个技术宇宙对您有所启发，您可以通过以下方式支持它的发展：
-
-1.  **⭐ 点亮星标** - 在GitHub为您觉得有价值的仓库点赞，让更多人看到。
-2.  **🔄 分享传播** - 将您感兴趣的内容分享给可能需要的朋友或团队。
-3.  **💡 参与共建** - 阅读 [贡献指南](./CONTRIBUTING.md)，提交想法、问题或代码。
-4.  **🐛 反馈问题** - 遇到任何问题，提交详细的Issue就是最大的帮助。
+1. **⭐ Star** — 为本仓库与有价值的卫星包点星
+2. **🔄 分享** — 推荐给需要的团队
+3. **💡 共建** — 阅读 [贡献指南](./CONTRIBUTING.md)
+4. **🐛 反馈** — 详细 Issue 即是最大帮助
 
 ## 📄 授权许可
 
-本技术宇宙内的所有代码，除非特别注明，均采用 [MIT License](./LICENSE)。您可以自由使用、修改和分发，但请保留原作者的版权声明。
+采用 [MIT License](./LICENSE)。自由使用、修改与分发，请保留版权声明。
 
 ---
