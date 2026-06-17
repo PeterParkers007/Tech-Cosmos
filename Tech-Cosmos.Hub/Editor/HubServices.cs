@@ -85,19 +85,28 @@ namespace TechCosmos.Hub.Editor
     {
         NotAvailable,
         LocalOnly,
-        InManifest
+        InManifest,
+        AssetsEmbedded
     }
 
     public static class PackageDetector
     {
         public static PackagePresence GetPresence(PackageCatalogEntry entry, PackageCatalogFile catalog)
         {
+            if (ManifestHelper.HasDependency(entry.id))
+                return PackagePresence.InManifest;
+
+            if (PackageAssetsImporter.IsInstalled(entry))
+                return PackagePresence.AssetsEmbedded;
+
             var localPath = Path.Combine(HubPaths.ProjectRoot, catalog.frameworkRoot, entry.folder);
             var hasLocal = Directory.Exists(localPath) && File.Exists(Path.Combine(localPath, "package.json"));
-            var inManifest = ManifestHelper.HasDependency(entry.id);
-
-            if (inManifest) return PackagePresence.InManifest;
             if (hasLocal) return PackagePresence.LocalOnly;
+
+            var legacyPath = Path.Combine(HubPaths.ProjectRoot, HubSettings.LegacyFrameworkRoot, entry.folder);
+            if (Directory.Exists(legacyPath) && File.Exists(Path.Combine(legacyPath, "package.json")))
+                return PackagePresence.LocalOnly;
+
             return PackagePresence.NotAvailable;
         }
 
@@ -112,20 +121,47 @@ namespace TechCosmos.Hub.Editor
             }
             return false;
         }
+
+        public static string ResolvePackageRoot(PackageCatalogEntry entry, PackageCatalogFile catalog)
+        {
+            if (PackageAssetsImporter.IsInstalled(entry))
+                return HubSettings.AssetsPackageRoot;
+            if (Directory.Exists(Path.Combine(HubPaths.ProjectRoot, catalog.frameworkRoot, entry.folder)))
+                return catalog.frameworkRoot;
+            if (Directory.Exists(Path.Combine(HubPaths.ProjectRoot, HubSettings.LegacyFrameworkRoot, entry.folder)))
+                return HubSettings.LegacyFrameworkRoot;
+            return HubSettings.GetEffectiveFrameworkRoot(catalog);
+        }
+
+        public static bool CanImport(PackageCatalogEntry entry, PackageCatalogFile catalog)
+        {
+            var presence = GetPresence(entry, catalog);
+
+            if (HubSettings.ImportMode == HubImportMode.AssetsEmbed)
+            {
+                if (presence == PackagePresence.AssetsEmbedded) return false;
+                return !string.IsNullOrEmpty(entry.gitUrl) || presence == PackagePresence.LocalOnly
+                       || PackageAssetsImporter.ResolveReadmeFullPath(entry, catalog) != null
+                       || Directory.Exists(Path.Combine(HubPaths.ProjectRoot, catalog.frameworkRoot, entry.folder));
+            }
+
+            if (presence == PackagePresence.InManifest) return false;
+            return !string.IsNullOrEmpty(entry.gitUrl) || presence == PackagePresence.LocalOnly;
+        }
     }
 
     public static class PackageInstaller
     {
         public static void ImportPackage(PackageCatalogEntry entry, PackageCatalogFile catalog)
         {
-            var presence = PackageDetector.GetPresence(entry, catalog);
-
-            if (presence == PackagePresence.LocalOnly || presence == PackagePresence.InManifest)
+            if (HubSettings.ImportMode == HubImportMode.AssetsEmbed)
             {
-                var relative = $"file:../{catalog.frameworkRoot}/{entry.folder}".Replace("\\", "/");
-                ManifestHelper.AddDependency(entry.id, relative);
+                PackageAssetsImporter.ImportToAssets(entry, catalog);
                 return;
             }
+
+            if (ManifestHelper.HasDependency(entry.id))
+                return;
 
             if (!string.IsNullOrEmpty(entry.gitUrl))
             {
@@ -133,12 +169,67 @@ namespace TechCosmos.Hub.Editor
                 return;
             }
 
-            throw new InvalidOperationException($"无法导入 {entry.displayName}：本地无目录且未配置 gitUrl。");
+            var presence = PackageDetector.GetPresence(entry, catalog);
+            if (presence == PackagePresence.LocalOnly)
+            {
+                var root = PackageDetector.ResolvePackageRoot(entry, catalog);
+                var relative = $"file:../{root}/{entry.folder}".Replace("\\", "/");
+                ManifestHelper.AddDependency(entry.id, relative);
+                return;
+            }
+
+            throw new InvalidOperationException(
+                $"无法 Git 导入 {entry.displayName}：请配置 gitUrl，或先将包放入 {catalog.frameworkRoot}。");
+        }
+
+        public static void RemovePackage(PackageCatalogEntry entry)
+        {
+            if (HubSettings.ImportMode == HubImportMode.AssetsEmbed)
+                PackageAssetsImporter.RemoveFromAssets(entry);
+            else
+                RemoveFromManifest(entry.id);
         }
 
         public static void RemoveFromManifest(string packageId)
         {
             ManifestHelper.RemoveDependency(packageId);
         }
+
+        public static PackageBatchImportResult ImportPackages(
+            IEnumerable<PackageCatalogEntry> entries, PackageCatalogFile catalog)
+        {
+            var result = new PackageBatchImportResult();
+            if (entries == null) return result;
+
+            foreach (var entry in entries)
+            {
+                if (entry == null) continue;
+                try
+                {
+                    if (!PackageDetector.CanImport(entry, catalog))
+                    {
+                        result.Skipped.Add(entry.displayName ?? entry.id);
+                        continue;
+                    }
+
+                    ImportPackage(entry, catalog);
+                    result.Succeeded.Add(entry.displayName ?? entry.id);
+                }
+                catch (Exception ex)
+                {
+                    result.Failed.Add($"{entry.displayName}: {ex.Message}");
+                }
+            }
+
+            return result;
+        }
+    }
+
+    public sealed class PackageBatchImportResult
+    {
+        public readonly List<string> Succeeded = new();
+        public readonly List<string> Skipped = new();
+        public readonly List<string> Failed = new();
+        public bool HasWork => Succeeded.Count > 0 || Failed.Count > 0;
     }
 }

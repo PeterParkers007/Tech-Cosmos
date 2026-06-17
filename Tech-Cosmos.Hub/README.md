@@ -30,15 +30,16 @@ https://github.com/PeterParkers007/Tech-Cosmos.git?path=/Tech-Cosmos.Hub
 
 `Tech-Cosmos → Hub`
 
-快捷菜单：`Tech-Cosmos → Hub → Generate Project Structure (Standard)`
+项目结构、胶水生成等功能均在 Hub 面板内操作。
 
 ## 功能
 
 ### 1. 技术框架
 
-- 左侧：按分类浏览全部框架（catalog 含 Git URL）
-- 右侧：README 预览、状态徽章、导入/移除
-- **导入**：本地有 `Assets/Framework/<包>` 时用 `file:`；否则写入 catalog 中的 **gitUrl**
+- 左侧：**导入模式**切换（Git UPM / Assets 嵌入）
+- **多选**：勾选框架 → **导入选中** / **全选可见** / **清除**
+- **Git UPM**：写入 `Packages/manifest.json`（Git URL 或 `file:`）
+- **Assets 嵌入**：复制/克隆到 `Assets/Package-TechCosmos/<包名>/`（自动创建目录）
 
 ### 2. 胶水生成
 

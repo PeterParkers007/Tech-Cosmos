@@ -170,18 +170,39 @@
     border-color: rgb(45, 50, 62);
 }
 
-.hub-sidebar-search {
+.hub-search-wrap {
+    flex-shrink: 0;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    flex-direction: row;
     margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.hub-sidebar-search {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
     border-radius: 8px;
     background-color: rgb(24, 27, 35);
     border-color: rgb(50, 56, 70);
+    overflow: hidden;
 }
 
 .hub-sidebar-search > TextInput {
+    flex-grow: 1;
+    min-width: 0;
     background-color: transparent;
     border-width: 0;
     color: rgb(210, 216, 228);
     font-size: 12px;
+}
+
+.hub-sidebar-search > .unity-toolbar-searchfield__input {
+    min-width: 0;
 }
 
 .hub-sidebar-scroll {
@@ -255,6 +276,20 @@
 .hub-list-item--selected {
     background-color: rgb(42, 52, 72);
     border-left-color: rgb(79, 140, 255);
+}
+
+.hub-list-item--checked {
+    background-color: rgb(36, 42, 54);
+}
+
+.hub-list-check {
+    margin-right: 4px;
+    flex-shrink: 0;
+}
+
+.hub-list-check > .unity-toggle__input {
+    margin-left: 0;
+    margin-right: 0;
 }
 
 .hub-status-dot {
@@ -452,7 +487,7 @@
 .hub-readme-card {
     background-color: rgb(24, 27, 35);
     border-radius: 10px;
-    padding: 16px;
+    padding: 20px 22px;
     border-width: 1px;
     border-color: rgb(42, 48, 60);
     margin-top: 8px;
@@ -466,10 +501,250 @@
     letter-spacing: 0.5px;
 }
 
-.hub-readme-text {
+/* ── Markdown (README) ── */
+.hub-md {
+    flex-shrink: 0;
+}
+
+.hub-md-empty,
+.hub-md-truncate {
+    font-size: 12px;
+    color: rgb(130, 138, 155);
+    margin-top: 8px;
+    -unity-font-style: italic;
+}
+
+.hub-md-p,
+.hub-md-quote-line,
+.hub-md-li-text,
+.hub-md-cell {
+    font-size: 13px;
+    color: rgb(198, 204, 218);
+    white-space: normal;
+    margin-top: 0;
+    margin-bottom: 10px;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.hub-md-h1 {
+    font-size: 24px;
+    color: rgb(244, 246, 250);
+    -unity-font-style: bold;
+    margin-top: 4px;
+    margin-bottom: 12px;
+    white-space: normal;
+}
+
+.hub-md-h2 {
+    font-size: 19px;
+    color: rgb(236, 240, 248);
+    -unity-font-style: bold;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(48, 54, 68);
+    white-space: normal;
+}
+
+.hub-md-h3 {
+    font-size: 16px;
+    color: rgb(228, 232, 240);
+    -unity-font-style: bold;
+    margin-top: 16px;
+    margin-bottom: 8px;
+    white-space: normal;
+}
+
+.hub-md-h4 {
+    font-size: 14px;
+    color: rgb(220, 226, 236);
+    -unity-font-style: bold;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    white-space: normal;
+}
+
+.hub-md-h5 {
+    font-size: 13px;
+    color: rgb(210, 216, 228);
+    -unity-font-style: bold;
+    margin-top: 12px;
+    margin-bottom: 6px;
+    white-space: normal;
+}
+
+.hub-md-h6 {
+    font-size: 12px;
+    color: rgb(170, 178, 195);
+    -unity-font-style: bold;
+    letter-spacing: 0.3px;
+    margin-top: 10px;
+    margin-bottom: 4px;
+    white-space: normal;
+}
+
+.hub-md-pre {
+    background-color: rgb(18, 20, 28);
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgb(42, 48, 62);
+    padding: 12px 14px;
+    margin-top: 8px;
+    margin-bottom: 12px;
+}
+
+.hub-md-code {
+    font-size: 12px;
+    color: rgb(186, 196, 214);
+    white-space: normal;
+    -unity-white-space: pre-wrap;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.hub-md-blockquote {
+    border-left-width: 3px;
+    border-left-color: rgb(72, 118, 210);
+    padding-left: 14px;
+    margin-top: 8px;
+    margin-bottom: 12px;
+    background-color: rgba(72, 118, 210, 0.06);
+    border-radius: 0 6px 6px 0;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.hub-md-quote-line {
+    color: rgb(170, 180, 200);
+    margin-bottom: 6px;
+}
+
+.hub-md-ul,
+.hub-md-ol {
+    margin-top: 4px;
+    margin-bottom: 12px;
+    padding-left: 4px;
+}
+
+.hub-md-li {
+    flex-direction: row;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.hub-md-li-marker {
+    width: 22px;
+    min-width: 22px;
+    font-size: 13px;
+    color: rgb(120, 140, 180);
+    -unity-font-style: bold;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.hub-md-li-content {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-bottom: 0;
+}
+
+.hub-md-li-text {
+    margin-bottom: 0;
+}
+
+.hub-md-hr {
+    height: 1px;
+    background-color: rgb(48, 54, 68);
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+.hub-md-table-scroll {
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 14px;
+    max-height: none;
+}
+
+.hub-md-table-scroll .hub-md-table {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.hub-md-table {
+    margin-top: 10px;
+    margin-bottom: 14px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgb(48, 54, 68);
+    flex-shrink: 0;
+    align-self: flex-start;
+    max-width: 100%;
+}
+
+.hub-md-table-body {
+    flex-shrink: 0;
+}
+
+.hub-md-tr {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    flex-shrink: 0;
+}
+
+.hub-md-tr--head {
+    background-color: rgb(32, 38, 50);
+}
+
+.hub-md-tr--alt {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.hub-md-th,
+.hub-md-td {
+    padding: 3px 8px;
+    border-right-width: 1px;
+    border-right-color: rgb(48, 54, 68);
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(48, 54, 68);
+    justify-content: flex-start;
+    align-items: flex-start;
+    align-self: flex-start;
+    flex-shrink: 0;
+}
+
+.hub-md-tr:last-child .hub-md-th,
+.hub-md-tr:last-child .hub-md-td {
+    border-bottom-width: 0;
+}
+
+.hub-md-th:last-child,
+.hub-md-td:last-child {
+    border-right-width: 0;
+}
+
+.hub-md-cell {
     font-size: 12px;
     color: rgb(185, 192, 210);
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
     white-space: normal;
+    -unity-paragraph-spacing: 0;
+}
+
+.hub-md-th {
+    background-color: rgb(32, 38, 50);
+}
+
+.hub-md-cell--head {
+    color: rgb(210, 216, 230);
 }
 
 /* ── Glue checklist ── */
@@ -568,6 +843,54 @@
     font-size: 11px;
     color: rgb(230, 180, 100);
     white-space: normal;
+}
+
+.hub-import-mode {
+    flex-direction: column;
+    margin-bottom: 8px;
+    width: 100%;
+    min-width: 0;
+}
+
+.hub-import-mode > .hub-field-label {
+    width: auto;
+    min-width: 0;
+    margin-bottom: 4px;
+}
+
+.hub-import-mode-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.hub-import-mode-row > .hub-tab {
+    margin-top: 0;
+    margin-right: 4px;
+    margin-bottom: 4px;
+    border-radius: 8px;
+    height: 28px;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.hub-batch-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.hub-batch-row > .hub-btn {
+    margin-top: 4px;
+    margin-left: 0;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
+.hub-import-mode > .hub-sidebar-hint {
+    margin-top: 6px;
+    -unity-text-align: middle-left;
 }
 
 .hub-sidebar-footer {

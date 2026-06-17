@@ -2,14 +2,6 @@
   "frameworkRoot": "Assets/Framework",
   "packages": [
     {
-      "id": "com.techcosmos.hub",
-      "folder": "Tech-Cosmos.Hub",
-      "displayName": "Tech-Cosmos Hub",
-      "category": "Hub",
-      "description": "集成中枢：浏览框架、Git/本地导入 UPM、条件胶水、项目结构脚手架",
-      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.git?path=/Tech-Cosmos.Hub"
-    },
-    {
       "id": "com.techcosmos.core",
       "folder": "Tech-Cosmos.Framework.Core",
       "displayName": "Core",

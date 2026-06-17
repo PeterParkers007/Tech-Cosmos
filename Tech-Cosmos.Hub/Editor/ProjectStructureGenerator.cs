@@ -221,36 +221,6 @@ namespace TechCosmos.Hub.Editor
                 $"[Tech-Cosmos Hub] 项目结构已生成：新建文件夹 {result.FoldersCreated}，跳过 {result.FoldersSkipped}，文件 {result.FilesCreated}。");
         }
 
-        [MenuItem("Tech-Cosmos/Hub/Generate Project Structure (Standard)", priority = 1)]
-        public static void MenuGenerateStandard()
-        {
-            var file = HubDataLoader.LoadProjectStructure();
-            var preset = FindPreset(file, "standard");
-            if (preset == null)
-            {
-                EditorUtility.DisplayDialog("Tech-Cosmos Hub", "未找到 standard 预设。", "确定");
-                return;
-            }
-
-            if (!EditorUtility.DisplayDialog(
-                    "生成项目结构",
-                    $"将在 `{preset.root}` 创建标准游戏目录。\n已存在的文件夹不会覆盖。\n\n是否继续？",
-                    "生成",
-                    "取消"))
-                return;
-
-            var result = Generate(preset, new ProjectStructureOptions
-            {
-                WriteReadme = true,
-                WriteGitKeep = true
-            });
-
-            EditorUtility.DisplayDialog(
-                "完成",
-                $"新建 {result.FoldersCreated} 个文件夹\n跳过 {result.FoldersSkipped} 个已存在\n新建 {result.FilesCreated} 个文件",
-                "确定");
-        }
-
         public static ProjectStructurePreset FindPreset(ProjectStructureFile file, string id)
         {
             if (file?.presets == null) return null;

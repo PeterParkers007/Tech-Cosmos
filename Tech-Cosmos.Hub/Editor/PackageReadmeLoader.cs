@@ -1,7 +1,9 @@
+#if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Text.RegularExpressions;
+using UnityEditor.PackageManager;
 
 namespace TechCosmos.Hub.Editor
 {
@@ -12,12 +14,17 @@ namespace TechCosmos.Hub.Editor
         public static string GetReadmeAssetPath(PackageCatalogEntry entry, PackageCatalogFile catalog)
         {
             if (entry == null || catalog == null) return null;
-            var full = Path.Combine(HubPaths.ProjectRoot, catalog.frameworkRoot, entry.folder, "README.md");
-            if (!File.Exists(full)) return null;
-            return $"{catalog.frameworkRoot}/{entry.folder}/README.md".Replace("\\", "/");
+
+            var upmAsset = TryGetUpmReadmeAssetPath(entry);
+            if (!string.IsNullOrEmpty(upmAsset)) return upmAsset;
+
+            var full = ResolveReadmeFullPath(entry, catalog);
+            if (string.IsNullOrEmpty(full)) return null;
+
+            return ToProjectRelativeAssetPath(full);
         }
 
-        public static string LoadPreview(PackageCatalogEntry entry, PackageCatalogFile catalog, int maxChars = 12000)
+        public static string LoadPreview(PackageCatalogEntry entry, PackageCatalogFile catalog)
         {
             if (entry == null) return string.Empty;
 
@@ -25,31 +32,26 @@ namespace TechCosmos.Hub.Editor
             if (Cache.TryGetValue(cacheKey, out var cached))
                 return cached;
 
-            var path = Path.Combine(HubPaths.ProjectRoot, catalog.frameworkRoot, entry.folder, "README.md");
+            var path = ResolveReadmeFullPath(entry, catalog);
             string text;
 
-            if (File.Exists(path))
-            {
+            if (!string.IsNullOrEmpty(path) && File.Exists(path))
                 text = File.ReadAllText(path);
-                text = SimplifyMarkdown(text);
-            }
             else
             {
+                var root = PackageDetector.ResolvePackageRoot(entry, catalog);
                 var sb = new StringBuilder();
                 sb.AppendLine($"# {entry.displayName}");
                 sb.AppendLine();
                 if (!string.IsNullOrEmpty(entry.description))
                     sb.AppendLine(entry.description);
                 sb.AppendLine();
-                sb.AppendLine($"包 ID: {entry.id}");
-                sb.AppendLine($"目录: {catalog.frameworkRoot}/{entry.folder}");
+                sb.AppendLine($"包 ID: `{entry.id}`");
+                sb.AppendLine($"目录: `{root}/{entry.folder}`");
                 sb.AppendLine();
-                sb.AppendLine("（该包目录下暂无 README.md，以上为目录简介。）");
+                sb.AppendLine("（未找到 README.md。若已通过 Git UPM 导入，请点「解析 Packages」后刷新 Hub。）");
                 text = sb.ToString();
             }
-
-            if (text.Length > maxChars)
-                text = text.Substring(0, maxChars) + "\n\n…（已截断，点击「打开 README」查看完整文件）";
 
             Cache[cacheKey] = text;
             return text;
@@ -57,28 +59,79 @@ namespace TechCosmos.Hub.Editor
 
         public static void ClearCache() => Cache.Clear();
 
-        private static string SimplifyMarkdown(string markdown)
+        public static string ResolveReadmeFullPath(PackageCatalogEntry entry, PackageCatalogFile catalog)
         {
-            if (string.IsNullOrEmpty(markdown)) return string.Empty;
+            if (entry == null) return null;
 
-            var lines = markdown.Replace("\r\n", "\n").Split('\n');
-            var sb = new StringBuilder();
+            var upm = TryGetUpmReadmeFullPath(entry);
+            if (!string.IsNullOrEmpty(upm)) return upm;
 
-            foreach (var raw in lines)
+            if (PackageAssetsImporter.IsInstalled(entry))
             {
-                var line = raw;
-
-                if (Regex.IsMatch(line, @"^#{1,6}\s+"))
-                    line = Regex.Replace(line, @"^#{1,6}\s+", "▎ ");
-
-                line = Regex.Replace(line, @"\*\*([^*]+)\*\*", "$1");
-                line = Regex.Replace(line, @"`([^`]+)`", "$1");
-                line = Regex.Replace(line, @"\[([^\]]+)\]\([^)]+\)", "$1");
-
-                sb.AppendLine(line);
+                var embedded = Path.Combine(PackageAssetsImporter.GetPackageFullPath(entry), "README.md");
+                if (File.Exists(embedded)) return embedded;
             }
 
-            return sb.ToString().Trim();
+            foreach (var dir in EnumeratePackageDirectories(entry, catalog))
+            {
+                var readme = Path.Combine(dir, "README.md");
+                if (File.Exists(readme)) return readme;
+            }
+
+            return null;
+        }
+
+        private static IEnumerable<string> EnumeratePackageDirectories(PackageCatalogEntry entry, PackageCatalogFile catalog)
+        {
+            if (catalog != null && !string.IsNullOrEmpty(catalog.frameworkRoot))
+                yield return Path.Combine(HubPaths.ProjectRoot, catalog.frameworkRoot, entry.folder);
+
+            yield return Path.Combine(HubPaths.ProjectRoot, HubSettings.LegacyFrameworkRoot, entry.folder);
+            yield return Path.Combine(HubPaths.ProjectRoot, HubSettings.AssetsPackageRoot, entry.folder);
+        }
+
+        private static string TryGetUpmReadmeFullPath(PackageCatalogEntry entry)
+        {
+            var info = FindPackageInfo(entry);
+            if (info == null || string.IsNullOrEmpty(info.resolvedPath)) return null;
+
+            var readme = Path.Combine(info.resolvedPath, "README.md");
+            return File.Exists(readme) ? readme : null;
+        }
+
+        private static string TryGetUpmReadmeAssetPath(PackageCatalogEntry entry)
+        {
+            var info = FindPackageInfo(entry);
+            if (info == null || string.IsNullOrEmpty(info.assetPath)) return null;
+
+            var assetPath = $"{info.assetPath}/README.md".Replace('\\', '/');
+            var full = Path.Combine(HubPaths.ProjectRoot, assetPath);
+            return File.Exists(full) ? assetPath : null;
+        }
+
+        private static PackageInfo FindPackageInfo(PackageCatalogEntry entry)
+        {
+            if (string.IsNullOrEmpty(entry?.id)) return null;
+            try
+            {
+                return PackageInfo.FindForPackageName(entry.id);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static string ToProjectRelativeAssetPath(string fullPath)
+        {
+            if (string.IsNullOrEmpty(fullPath)) return null;
+
+            var root = Path.GetFullPath(HubPaths.ProjectRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var full = Path.GetFullPath(fullPath);
+            if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase)) return null;
+
+            return full.Substring(root.Length + 1).Replace('\\', '/');
         }
     }
 }
+#endif

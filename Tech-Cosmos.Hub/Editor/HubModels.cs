@@ -11,6 +11,21 @@ namespace TechCosmos.Hub.Editor
     {
         public string frameworkRoot = "Assets/Framework";
         public PackageCatalogEntry[] packages = Array.Empty<PackageCatalogEntry>();
+
+        public IEnumerable<PackageCatalogEntry> BrowsablePackages()
+        {
+            if (packages == null) yield break;
+            foreach (var p in packages)
+            {
+                if (p != null && p.id != HubCatalog.SelfPackageId)
+                    yield return p;
+            }
+        }
+    }
+
+    public static class HubCatalog
+    {
+        public const string SelfPackageId = "com.techcosmos.hub";
     }
 
     [Serializable]
@@ -120,8 +135,18 @@ namespace TechCosmos.Hub.Editor
         public static string ProjectRoot => Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
     }
 
+    public enum HubImportMode
+    {
+        GitUpm = 0,
+        AssetsEmbed = 1
+    }
+
     public static class HubSettings
     {
+        public const string AssetsPackageRoot = "Assets/Package-TechCosmos";
+        public const string LegacyFrameworkRoot = "Assets/Framework";
+
+        private const string PrefsImportMode = "TechCosmos.Hub.ImportMode";
         private const string PrefsHeroType = "TechCosmos.Hub.HeroType";
         private const string PrefsHeroNamespace = "TechCosmos.Hub.HeroNamespace";
         private const string PrefsProjectRoot = "TechCosmos.Hub.ProjectRoot";
@@ -177,6 +202,20 @@ namespace TechCosmos.Hub.Editor
         {
             get => EditorPrefs.GetString(PrefsSelectedStructurePreset, "standard");
             set => EditorPrefs.SetString(PrefsSelectedStructurePreset, value);
+        }
+
+        public static HubImportMode ImportMode
+        {
+            get => (HubImportMode)EditorPrefs.GetInt(PrefsImportMode, (int)HubImportMode.GitUpm);
+            set => EditorPrefs.SetInt(PrefsImportMode, (int)value);
+        }
+
+        /// <summary>胶水检测与 README 解析使用的框架根目录。</summary>
+        public static string GetEffectiveFrameworkRoot(PackageCatalogFile catalog)
+        {
+            if (ImportMode == HubImportMode.AssetsEmbed)
+                return AssetsPackageRoot;
+            return string.IsNullOrEmpty(catalog?.frameworkRoot) ? LegacyFrameworkRoot : catalog.frameworkRoot;
         }
     }
 }

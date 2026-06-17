@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.PackageManager;
@@ -19,6 +20,7 @@ namespace TechCosmos.Hub.Editor
         private ProjectStructureFile _structure;
         private string _search = string.Empty;
         private string _selectedPackageId;
+        private readonly HashSet<string> _selectedPackageIds = new();
         private string _selectedRecipeId;
         private string _selectedStructurePresetId;
         private bool _pendingResolve;
@@ -35,8 +37,9 @@ namespace TechCosmos.Hub.Editor
         private Button _tabGlue;
         private Button _tabProjectStructure;
         private ToolbarSearchField _searchField;
+        private Button _batchImportBtn;
 
-        [MenuItem("Tech-Cosmos/Hub", priority = 0)]
+        [MenuItem("Tech-Cosmos/Hub", false, 0)]
         public static void Open()
         {
             var w = GetWindow<TechCosmosHubWindow>("Tech-Cosmos Hub");
@@ -101,8 +104,12 @@ namespace TechCosmos.Hub.Editor
             _recipes = HubDataLoader.LoadRecipes();
             _structure = HubDataLoader.LoadProjectStructure();
 
-            if (string.IsNullOrEmpty(_selectedPackageId) && _catalog?.packages?.Length > 0)
-                _selectedPackageId = _catalog.packages[0].id;
+            _selectedPackageIds.Remove(HubCatalog.SelfPackageId);
+
+            var browsable = (_catalog?.BrowsablePackages() ?? Enumerable.Empty<PackageCatalogEntry>()).ToList();
+            if ((string.IsNullOrEmpty(_selectedPackageId) || _selectedPackageId == HubCatalog.SelfPackageId) &&
+                browsable.Count > 0)
+                _selectedPackageId = browsable[0].id;
 
             if (string.IsNullOrEmpty(_selectedRecipeId) && _recipes?.recipes?.Length > 0)
                 _selectedRecipeId = _recipes.recipes[0].id;
@@ -155,12 +162,20 @@ namespace TechCosmos.Hub.Editor
             return shell;
         }
 
-        private static void AddReadmeCard(ScrollView scroll, string text)
+        private static void AddMarkdownCard(ScrollView scroll, string markdown, string baseDirectory = null)
         {
             var card = new VisualElement();
             card.AddToClassList("hub-readme-card");
-            card.Add(HubUiFactory.Label(text, "hub-readme-text"));
+            card.Add(HubMarkdownRenderer.Render(markdown, baseDirectory));
             scroll.Add(card);
+        }
+
+        private static void AddReadmeCard(ScrollView scroll, PackageCatalogEntry pkg, PackageCatalogFile catalog)
+        {
+            var markdown = PackageReadmeLoader.LoadPreview(pkg, catalog);
+            var readmePath = PackageReadmeLoader.ResolveReadmeFullPath(pkg, catalog);
+            var baseDir = string.IsNullOrEmpty(readmePath) ? null : Path.GetDirectoryName(readmePath);
+            AddMarkdownCard(scroll, markdown, baseDir);
         }
 
         private void BuildHeader()
@@ -243,14 +258,21 @@ namespace TechCosmos.Hub.Editor
             var sidebar = new VisualElement();
             sidebar.AddToClassList("hub-sidebar");
 
-            _searchField = new ToolbarSearchField();
+            var searchWrap = new VisualElement();
+            searchWrap.AddToClassList("hub-search-wrap");
+
+            _searchField = new ToolbarSearchField { value = _search };
             _searchField.AddToClassList("hub-sidebar-search");
+            _searchField.style.flexGrow = 1;
+            _searchField.style.flexShrink = 1;
+            _searchField.style.minWidth = 0;
             _searchField.RegisterValueChangedCallback(evt =>
             {
                 _search = evt.newValue ?? string.Empty;
                 RefreshSidebar();
             });
-            sidebar.Add(_searchField);
+            searchWrap.Add(_searchField);
+            sidebar.Add(searchWrap);
 
             var sidebarScroll = new ScrollView(ScrollViewMode.Vertical);
             sidebarScroll.AddToClassList("hub-sidebar-scroll");
@@ -275,19 +297,22 @@ namespace TechCosmos.Hub.Editor
 
         private void RefreshStats()
         {
-            if (_catalog?.packages == null) return;
+            if (_catalog == null) return;
 
-            int installed = 0, local = 0;
-            foreach (var p in _catalog.packages)
+            int installed = 0, local = 0, total = 0;
+            foreach (var p in _catalog.BrowsablePackages())
             {
+                total++;
                 var presence = PackageDetector.GetPresence(p, _catalog);
-                if (presence == PackagePresence.InManifest) installed++;
-                else if (presence == PackagePresence.LocalOnly) local++;
+                if (presence is PackagePresence.InManifest or PackagePresence.AssetsEmbedded)
+                    installed++;
+                else if (presence == PackagePresence.LocalOnly)
+                    local++;
             }
 
             _statInstalled.text = installed.ToString();
             _statLocal.text = local.ToString();
-            _statTotal.text = _catalog.packages.Length.ToString();
+            _statTotal.text = total.ToString();
         }
 
         private void RefreshSidebar()
@@ -305,13 +330,14 @@ namespace TechCosmos.Hub.Editor
 
         private void BuildPackageSidebar()
         {
-            if (_catalog?.packages == null || _catalog.packages.Length == 0)
+            var browsable = _catalog?.BrowsablePackages().ToList();
+            if (browsable == null || browsable.Count == 0)
             {
                 _sidebarList.Add(HubUiFactory.Label("未找到 package-catalog.json", "hub-empty-text"));
                 return;
             }
 
-            var filtered = _catalog.packages
+            var filtered = browsable
                 .Where(MatchesSearch)
                 .GroupBy(p => p.category ?? "Other")
                 .OrderBy(g => g.Key);
@@ -327,14 +353,29 @@ namespace TechCosmos.Hub.Editor
                     item.AddToClassList("hub-list-item");
                     if (pkg.id == _selectedPackageId)
                         item.AddToClassList("hub-list-item--selected");
+                    if (_selectedPackageIds.Contains(pkg.id))
+                        item.AddToClassList("hub-list-item--checked");
+
+                    var check = new Toggle { value = _selectedPackageIds.Contains(pkg.id) };
+                    check.AddToClassList("hub-list-check");
+                    var capturedPkg = pkg;
+                    check.RegisterValueChangedCallback(evt =>
+                    {
+                        if (evt.newValue) _selectedPackageIds.Add(capturedPkg.id);
+                        else _selectedPackageIds.Remove(capturedPkg.id);
+                        UpdateBatchImportButton();
+                        RefreshSidebar();
+                    });
+                    check.RegisterCallback<ClickEvent>(evt => evt.StopPropagation());
+                    item.Add(check);
 
                     item.Add(HubUiFactory.StatusDot(presence));
                     item.Add(HubUiFactory.Label(pkg.displayName, "hub-list-item-name"));
 
-                    var captured = pkg;
-                    item.RegisterCallback<ClickEvent>(_ =>
+                    item.RegisterCallback<ClickEvent>(evt =>
                     {
-                        _selectedPackageId = captured.id;
+                        if (evt.target is Toggle) return;
+                        _selectedPackageId = capturedPkg.id;
                         RefreshSidebar();
                         RefreshDetail();
                     });
@@ -343,8 +384,68 @@ namespace TechCosmos.Hub.Editor
                 }
             }
 
-            var visible = _catalog.packages.Count(MatchesSearch);
-            _sidebarFooter.Add(HubUiFactory.Label($"{visible} / {_catalog.packages.Length} 项", "hub-sidebar-hint"));
+            var visible = browsable.Count(MatchesSearch);
+            _sidebarFooter.Add(HubUiFactory.ImportModeSelector(() =>
+            {
+                RefreshSidebar();
+                RefreshDetail();
+            }));
+
+            var batchRow = new VisualElement();
+            batchRow.AddToClassList("hub-batch-row");
+            _batchImportBtn = HubUiFactory.Button("导入选中 (0)", "hub-btn hub-btn--accent", ImportSelectedPackages);
+            batchRow.Add(_batchImportBtn);
+            batchRow.Add(HubUiFactory.Button("全选可见", "hub-btn hub-btn--ghost", SelectAllVisiblePackages));
+            batchRow.Add(HubUiFactory.Button("清除", "hub-btn hub-btn--ghost", () =>
+            {
+                _selectedPackageIds.Clear();
+                UpdateBatchImportButton();
+                RefreshSidebar();
+            }));
+            _sidebarFooter.Add(batchRow);
+            UpdateBatchImportButton();
+
+            _sidebarFooter.Add(HubUiFactory.Label($"{visible} / {browsable.Count} 项", "hub-sidebar-hint"));
+        }
+
+        private void SelectAllVisiblePackages()
+        {
+            foreach (var pkg in _catalog.BrowsablePackages().Where(MatchesSearch))
+                _selectedPackageIds.Add(pkg.id);
+            UpdateBatchImportButton();
+            RefreshSidebar();
+        }
+
+        private void UpdateBatchImportButton()
+        {
+            if (_batchImportBtn == null) return;
+            var label = HubSettings.ImportMode == HubImportMode.AssetsEmbed ? "嵌入选中" : "导入选中";
+            _batchImportBtn.text = $"{label} ({_selectedPackageIds.Count})";
+            _batchImportBtn.SetEnabled(_selectedPackageIds.Count > 0);
+        }
+
+        private void ImportSelectedPackages()
+        {
+            if (_catalog?.packages == null || _selectedPackageIds.Count == 0) return;
+
+            var entries = _catalog.BrowsablePackages()
+                .Where(p => _selectedPackageIds.Contains(p.id))
+                .ToList();
+            var result = PackageInstaller.ImportPackages(entries, _catalog);
+
+            if (HubSettings.ImportMode == HubImportMode.GitUpm && result.Succeeded.Count > 0)
+                _pendingResolve = true;
+
+            var msg = $"成功: {result.Succeeded.Count}";
+            if (result.Skipped.Count > 0) msg += $"\n跳过: {result.Skipped.Count}";
+            if (result.Failed.Count > 0) msg += $"\n失败:\n• " + string.Join("\n• ", result.Failed);
+
+            EditorUtility.DisplayDialog(
+                result.Failed.Count > 0 ? "批量导入完成（部分失败）" : "批量导入完成",
+                msg, "确定");
+
+            if (result.Succeeded.Count > 0)
+                EditorApplication.delayCall += ReloadData;
         }
 
         private void BuildGlueSidebar()
@@ -428,6 +529,7 @@ namespace TechCosmos.Hub.Editor
             }
 
             var presence = PackageDetector.GetPresence(pkg, _catalog);
+            var isAssetsMode = HubSettings.ImportMode == HubImportMode.AssetsEmbed;
             var shell = CreateDetailShell();
 
             var header = new VisualElement();
@@ -443,6 +545,9 @@ namespace TechCosmos.Hub.Editor
             meta.Add(HubUiFactory.Label(pkg.category, "hub-chip hub-chip--category"));
             meta.Add(HubUiFactory.Label(pkg.id, "hub-chip"));
             meta.Add(PresenceBadge(presence));
+            meta.Add(HubUiFactory.Label(
+                isAssetsMode ? $"目标: {HubSettings.AssetsPackageRoot}" : "目标: Packages/manifest.json",
+                "hub-chip"));
             titleBlock.Add(meta);
             header.Add(titleBlock);
             shell.Top.Add(header);
@@ -450,35 +555,64 @@ namespace TechCosmos.Hub.Editor
             var btnRow = new VisualElement();
             btnRow.AddToClassList("hub-btn-row");
 
-            var importBtn = HubUiFactory.Button("导入包", "hub-btn hub-btn--primary", () => ImportPackage(pkg));
-            importBtn.SetEnabled(presence != PackagePresence.NotAvailable || !string.IsNullOrEmpty(pkg.gitUrl));
+            var importLabel = isAssetsMode ? "嵌入到 Assets" : "Git 导入";
+            var importBtn = HubUiFactory.Button(importLabel, "hub-btn hub-btn--primary", () => ImportPackage(pkg));
+            importBtn.SetEnabled(PackageDetector.CanImport(pkg, _catalog));
             btnRow.Add(importBtn);
 
-            var removeBtn = HubUiFactory.Button("从 Manifest 移除", "hub-btn hub-btn--danger", () =>
+            var removeLabel = isAssetsMode ? "从 Assets 移除" : "从 Manifest 移除";
+            var removeBtn = HubUiFactory.Button(removeLabel, "hub-btn hub-btn--danger", () =>
             {
-                PackageInstaller.RemoveFromManifest(pkg.id);
-                _pendingResolve = true;
+                if (isAssetsMode)
+                {
+                    if (!EditorUtility.DisplayDialog("移除框架", $"删除 {HubSettings.AssetsPackageRoot}/{pkg.folder}？", "删除", "取消"))
+                        return;
+                }
+
+                PackageInstaller.RemovePackage(pkg);
+                if (!isAssetsMode) _pendingResolve = true;
                 EditorApplication.delayCall += ReloadData;
             });
-            removeBtn.SetEnabled(presence == PackagePresence.InManifest);
+            removeBtn.SetEnabled(isAssetsMode
+                ? presence == PackagePresence.AssetsEmbedded
+                : presence == PackagePresence.InManifest);
             btnRow.Add(removeBtn);
 
+            if (isAssetsMode)
+            {
+                btnRow.Add(HubUiFactory.Button("在 Project 中定位", "hub-btn hub-btn--ghost", () =>
+                {
+                    var folder = $"{HubSettings.AssetsPackageRoot}/{pkg.folder}";
+                    var obj = AssetDatabase.LoadAssetAtPath<Object>(folder);
+                    if (obj != null) EditorGUIUtility.PingObject(obj);
+                }));
+            }
+
             var readmePath = PackageReadmeLoader.GetReadmeAssetPath(pkg, _catalog);
+            var readmeFullPath = PackageReadmeLoader.ResolveReadmeFullPath(pkg, _catalog);
             var openBtn = HubUiFactory.Button("打开 README", "hub-btn hub-btn--ghost", () =>
             {
-                var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(readmePath);
-                if (asset != null)
+                if (!string.IsNullOrEmpty(readmePath))
                 {
-                    AssetDatabase.OpenAsset(asset);
-                    EditorGUIUtility.PingObject(asset);
+                    var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(readmePath);
+                    if (asset != null)
+                    {
+                        AssetDatabase.OpenAsset(asset);
+                        EditorGUIUtility.PingObject(asset);
+                        return;
+                    }
                 }
+
+                if (!string.IsNullOrEmpty(readmeFullPath) && File.Exists(readmeFullPath))
+                    EditorUtility.OpenWithDefaultApp(readmeFullPath);
             });
-            openBtn.SetEnabled(!string.IsNullOrEmpty(readmePath));
+            openBtn.SetEnabled(!string.IsNullOrEmpty(readmePath)
+                || (!string.IsNullOrEmpty(readmeFullPath) && File.Exists(readmeFullPath)));
             btnRow.Add(openBtn);
 
             shell.Top.Add(btnRow);
             shell.Top.Add(HubUiFactory.Label("介绍 / README", "hub-section-title"));
-            AddReadmeCard(shell.Scroll, PackageReadmeLoader.LoadPreview(pkg, _catalog));
+            AddReadmeCard(shell.Scroll, pkg, _catalog);
         }
 
         private void BuildGlueDetail()
@@ -535,7 +669,7 @@ namespace TechCosmos.Hub.Editor
             }
 
             shell.Scroll.Add(HubUiFactory.Label("详细说明", "hub-section-title"));
-            AddReadmeCard(shell.Scroll, GlueRecipeDocs.GetDoc(recipe.id));
+            AddMarkdownCard(shell.Scroll, GlueRecipeDocs.GetDoc(recipe.id));
 
             var btnRow = new VisualElement();
             btnRow.AddToClassList("hub-btn-row");
@@ -703,7 +837,7 @@ namespace TechCosmos.Hub.Editor
             var warn = new VisualElement();
             warn.AddToClassList("hub-warning-box");
             warn.Add(HubUiFactory.Label(
-                "Framework 包请保持在 Assets/Framework/（只读）。业务代码、Resources、Art 放在 _Game 下。",
+                "框架包放在 Assets/Package-TechCosmos/ 或 UPM Git 依赖（只读）。业务代码、Resources、Art 放在 _Game 下。",
                 "hub-warning-text"));
             shell.Bottom.Add(warn);
         }
@@ -722,7 +856,8 @@ namespace TechCosmos.Hub.Editor
             return presence switch
             {
                 PackagePresence.InManifest => HubUiFactory.Badge("已导入 UPM", "hub-badge--installed"),
-                PackagePresence.LocalOnly => HubUiFactory.Badge("本地可用", "hub-badge--local"),
+                PackagePresence.AssetsEmbedded => HubUiFactory.Badge("已嵌入 Assets", "hub-badge--installed"),
+                PackagePresence.LocalOnly => HubUiFactory.Badge("本地源可用", "hub-badge--local"),
                 _ => HubUiFactory.Badge("未导入", "hub-badge--missing")
             };
         }
@@ -732,12 +867,14 @@ namespace TechCosmos.Hub.Editor
             try
             {
                 PackageInstaller.ImportPackage(pkg, _catalog);
-                _pendingResolve = true;
+                if (HubSettings.ImportMode == HubImportMode.GitUpm)
+                    _pendingResolve = true;
                 EditorApplication.delayCall += ReloadData;
             }
             catch (System.Exception ex)
             {
                 Debug.LogError($"[Hub] 导入失败: {ex.Message}");
+                EditorUtility.DisplayDialog("导入失败", ex.Message, "确定");
             }
         }
 

@@ -258,9 +258,7 @@ graph TB
 选项：`.gitkeep`、目录 README、`asmdef` 样板。  
 **只创建缺失目录，不删除、不覆盖已有文件。**
 
-### 快捷菜单
-
-`Tech-Cosmos → Hub → Generate Project Structure (Standard)`
+在 Hub 面板 **「项目结构」** 标签页中选择预设并生成。
 
 ---
 
