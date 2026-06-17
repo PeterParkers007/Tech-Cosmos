@@ -28,10 +28,28 @@ https://github.com/PeterParkers007/Tech-Cosmos.git?path=/Tech-Cosmos.Hub
 
 ## 打开
 
-- **Hub 面板**：`Tech-Cosmos → Hub`
-- **Hub Studio（Web 配置）**：`Tech-Cosmos → Hub Studio (Web)` — 编辑框架列表、胶水 Recipe、项目结构预设
+`Tech-Cosmos → Hub`
 
-项目结构、胶水生成等功能均在 Hub 面板内操作；扩展 catalog / recipes 等 JSON 请用 Hub Studio。
+项目结构、胶水生成等功能均在 Hub 面板内操作。
+
+## 维护 Hub 包（与 Unity 无关）
+
+在 **Tech-Cosmos.Hub 仓库**中扩展框架列表、胶水 Recipe、项目结构：
+
+```powershell
+cd Tools/HubStudio
+./start.ps1
+```
+
+编辑并保存后，于仓库根目录提交：
+
+```bash
+git add Data/
+git commit -m "hub: 描述扩展"
+git push origin main
+```
+
+详见 [Tools/HubStudio/README.md](Tools/HubStudio/README.md)。
 
 ## 功能
 
@@ -51,12 +69,6 @@ https://github.com/PeterParkers007/Tech-Cosmos.git?path=/Tech-Cosmos.Hub
 
 - 预设：精简 / 标准 / 完整
 - 可写 `.gitkeep`、README、asmdef 样板
-
-### 4. Hub Studio（Web）
-
-- 路径：`Tools/HubStudio/`
-- 编辑 `package-catalog.json`、`glue-recipes.json`、`project-structure.json` 与胶水模板
-- 支持新建框架、Recipe、结构预设与模板文件
 
 ## 架构文档
 

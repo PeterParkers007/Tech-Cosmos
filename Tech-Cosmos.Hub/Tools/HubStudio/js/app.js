@@ -24,6 +24,7 @@ const issuesList = $("#issuesList");
 const connectionStatus = $("#connectionStatus");
 const metaInfo = $("#metaInfo");
 const dirtyInfo = $("#dirtyInfo");
+const gitInfo = $("#gitInfo");
 const btnSaveAll = $("#btnSaveAll");
 
 const CATEGORIES = [
@@ -41,17 +42,37 @@ async function probeServer() {
   try {
     state.meta = await api("/api/meta");
     state.online = true;
-    connectionStatus.textContent = "已连接";
+    connectionStatus.textContent = "已连接仓库";
     connectionStatus.className = "status-pill status-pill--online";
     metaInfo.textContent = state.meta.hubRoot || "—";
+    await refreshGitStatus();
     return true;
   } catch {
     state.online = false;
     state.meta = null;
-    connectionStatus.textContent = "离线（可导入 JSON）";
+    connectionStatus.textContent = "未连接 — 请运行 start.ps1";
     connectionStatus.className = "status-pill status-pill--offline";
-    metaInfo.textContent = "未连接本地服务 — 运行 Tools/HubStudio/start.ps1";
+    metaInfo.textContent = "在 Hub 仓库的 Tools/HubStudio 目录启动 python server.py";
+    gitInfo.textContent = "";
     return false;
+  }
+}
+
+async function refreshGitStatus() {
+  if (!state.online) return;
+  try {
+    const data = await api("/api/git-status");
+    if (!data.isGitRepo) {
+      gitInfo.textContent = "（当前目录不是 git 仓库）";
+      return;
+    }
+    if (!data.changed?.length) {
+      gitInfo.textContent = "Data/ 无未提交变更";
+      return;
+    }
+    gitInfo.textContent = `待提交 ${data.changed.length} 项 — git add Data/ && git commit`;
+  } catch {
+    gitInfo.textContent = "";
   }
 }
 
@@ -70,6 +91,7 @@ async function loadAll() {
   state.templateContents = {};
   state.dirty = { catalog: false, recipes: false, structure: false, templates: {} };
   state.selectedId = null;
+  await refreshGitStatus();
   render();
 }
 
@@ -626,35 +648,18 @@ async function saveAll() {
   }
 
   state.dirty = { catalog: false, recipes: false, structure: false, templates: {} };
-  await loadAll();
-  alert("已保存到 Hub Data 目录。请在 Unity 中点击 Hub「刷新」。");
-}
+  await refreshGitStatus();
+  render();
 
-function importJsonFile() {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".json,application/json";
-  input.addEventListener("change", async () => {
-    const file = input.files?.[0];
-    if (!file) return;
-    const text = await file.text();
-    const data = JSON.parse(text);
-    if (state.tab === "catalog" && data.packages) {
-      state.catalog = data;
-      markDirty("catalog");
-    } else if (state.tab === "recipes" && data.recipes) {
-      state.recipes = data;
-      markDirty("recipes");
-    } else if (state.tab === "structure" && data.presets) {
-      state.structure = data;
-      markDirty("structure");
-    } else {
-      alert("无法识别 JSON 类型，请切换到对应标签后导入");
-      return;
-    }
-    render();
-  });
-  input.click();
+  const lines = [
+    "已保存到 Data/ 目录。",
+    "",
+    "在 Hub 仓库根目录执行：",
+    "  git add Data/",
+    '  git commit -m "hub: 描述本次扩展"',
+    "  git push origin main",
+  ];
+  alert(lines.join("\n"));
 }
 
 document.querySelectorAll(".tab").forEach((tab) => {
@@ -680,17 +685,8 @@ $("#btnReload").addEventListener("click", async () => {
 });
 $("#btnSaveAll").addEventListener("click", saveAll);
 
-connectionStatus.addEventListener("click", () => {
-  if (!state.online) importJsonFile();
-});
-
 (async function init() {
   await probeServer();
   if (state.online) await loadAll();
-  else {
-    state.catalog = { frameworkRoot: "Assets/Framework", packages: [] };
-    state.recipes = { outputRoot: "Assets/_Game/Generated/Hub", recipes: [] };
-    state.structure = { defaultRoot: "Assets/_Game", presets: [] };
-    render();
-  }
+  else render();
 })();

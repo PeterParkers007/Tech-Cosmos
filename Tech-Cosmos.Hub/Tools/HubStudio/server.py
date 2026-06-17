@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
-"""Tech-Cosmos Hub Studio — local API server for Hub Data/*.json and Templates."""
+"""Tech-Cosmos Hub Studio — 在 Hub 仓库根目录编辑 Data/，保存后直接 git commit。"""
 
 from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import unquote, urlparse
 
 PORT = int(os.environ.get("HUB_STUDIO_PORT", "8765"))
 STUDIO_ROOT = os.path.dirname(os.path.abspath(__file__))
-HUB_ROOT = os.path.abspath(os.path.join(STUDIO_ROOT, "..", ".."))
+HUB_ROOT = os.path.abspath(
+    os.environ.get("HUB_ROOT") or os.path.join(STUDIO_ROOT, "..", "..")
+)
 DATA_DIR = os.path.join(HUB_ROOT, "Data")
 TEMPLATES_DIR = os.path.join(DATA_DIR, "Templates")
 
@@ -44,6 +47,32 @@ def write_json(path: str, data: dict) -> None:
         f.write("\n")
 
 
+def is_git_repo() -> bool:
+    return os.path.isdir(os.path.join(HUB_ROOT, ".git"))
+
+
+def git_porcelain(paths: list[str] | None = None) -> list[str]:
+    if not is_git_repo():
+        return []
+    args = ["git", "status", "--porcelain"]
+    if paths:
+        args.extend(paths)
+    try:
+        result = subprocess.run(
+            args,
+            cwd=HUB_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=8,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    if result.returncode != 0:
+        return []
+    return [line for line in result.stdout.splitlines() if line.strip()]
+
+
 class HubStudioHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=STUDIO_ROOT, **kwargs)
@@ -71,6 +100,16 @@ class HubStudioHandler(SimpleHTTPRequestHandler):
                 "dataDir": DATA_DIR,
                 "templatesDir": TEMPLATES_DIR,
                 "port": PORT,
+                "isGitRepo": is_git_repo(),
+            })
+            return
+
+        if path == "/api/git-status":
+            changed = git_porcelain(["Data/"])
+            json_response(self, 200, {
+                "isGitRepo": is_git_repo(),
+                "changed": changed,
+                "hubRoot": HUB_ROOT,
             })
             return
 
@@ -164,11 +203,14 @@ class HubStudioHandler(SimpleHTTPRequestHandler):
 def main() -> int:
     if not os.path.isdir(DATA_DIR):
         print(f"ERROR: Hub Data directory not found: {DATA_DIR}", file=sys.stderr)
+        print("请在 Tech-Cosmos.Hub 仓库内运行，或设置环境变量 HUB_ROOT。", file=sys.stderr)
         return 1
 
     server = HTTPServer(("127.0.0.1", PORT), HubStudioHandler)
-    print(f"Hub Studio serving at http://127.0.0.1:{PORT}")
-    print(f"Hub root: {HUB_ROOT}")
+    print(f"Hub Studio  http://127.0.0.1:{PORT}")
+    print(f"Hub 仓库    {HUB_ROOT}")
+    if is_git_repo():
+        print("Git 仓库已识别 — 保存后可 git add Data/ && git commit")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

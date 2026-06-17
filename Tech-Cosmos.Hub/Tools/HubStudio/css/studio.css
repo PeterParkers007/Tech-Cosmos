@@ -337,12 +337,25 @@ body {
 
 .footer {
   display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
   justify-content: space-between;
   padding: 8px 20px;
   font-size: 11px;
   color: var(--muted);
   border-top: 1px solid var(--border);
   background: var(--surface);
+}
+
+#gitInfo {
+  font-family: var(--mono);
+  color: var(--success);
+}
+
+.empty-state code {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: #b8cff5;
 }
 
 .btn {

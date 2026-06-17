@@ -10,7 +10,7 @@
   <header class="topbar">
     <div class="brand">
       <h1>Hub Studio</h1>
-      <p>扩展技术框架 · 胶水 Recipe · 项目结构</p>
+      <p>维护 Tech-Cosmos.Hub 仓库 · 保存后 git commit</p>
     </div>
     <div class="topbar-actions">
       <span id="connectionStatus" class="status-pill status-pill--offline">离线</span>
@@ -38,7 +38,7 @@
     <section class="editor" id="editorPanel">
       <div class="empty-state" id="emptyState">
         <h2>选择或新建一项</h2>
-        <p>左侧列表管理条目，右侧编辑详情。修改后点「保存全部」写回 Hub Data 目录。</p>
+        <p>在 Hub 仓库中编辑 Data/ 配置。保存全部后于仓库根目录 <code>git add Data/</code> 并提交。</p>
       </div>
       <form id="editorForm" class="editor-form hidden" autocomplete="off"></form>
     </section>
@@ -52,6 +52,7 @@
   <footer class="footer">
     <span id="metaInfo">—</span>
     <span id="dirtyInfo"></span>
+    <span id="gitInfo"></span>
   </footer>
 
   <script type="module" src="js/app.js"></script>
