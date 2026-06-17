@@ -74,6 +74,15 @@ namespace TechCosmos.Hub.Editor
             EditorApplication.update -= OnEditorUpdate;
         }
 
+        internal static void RefreshAllOpenWindows()
+        {
+            foreach (var w in Resources.FindObjectsOfTypeAll<TechCosmosHubWindow>())
+            {
+                if (w != null)
+                    w.ReloadData();
+            }
+        }
+
         private void LoadStylesheet()
         {
             var direct = $"{HubPaths.HubAssetPath}/Editor/UI/TechCosmosHub.uss";
@@ -100,6 +109,14 @@ namespace TechCosmos.Hub.Editor
         private void ReloadData()
         {
             PackageReadmeLoader.ClearCache();
+
+            var catalogPath = HubPaths.CatalogJson;
+            if (!File.Exists(catalogPath))
+            {
+                Debug.LogWarning(
+                    $"[Tech-Cosmos Hub] 找不到 catalog 文件（若刚在 Package Manager 点了 Update，请点 Hub 内「刷新」或稍候重试）:\n{catalogPath}");
+            }
+
             _catalog = HubDataLoader.LoadCatalog();
             _recipes = HubDataLoader.LoadRecipes();
             _structure = HubDataLoader.LoadProjectStructure();

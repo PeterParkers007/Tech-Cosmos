@@ -87,45 +87,27 @@ namespace TechCosmos.Hub.Editor
 
     public static class HubPaths
     {
-        private static string _hubRoot;
-        private static string _hubAssetPath;
-
-        /// <summary>包在磁盘上的绝对路径（UPM Git / 本地嵌入均可用）。</summary>
         public static string HubRoot
         {
             get
             {
-                if (!string.IsNullOrEmpty(_hubRoot)) return _hubRoot;
-
                 var info = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(HubPaths).Assembly);
                 if (info != null && !string.IsNullOrEmpty(info.resolvedPath))
-                {
-                    _hubRoot = info.resolvedPath;
-                    return _hubRoot;
-                }
+                    return info.resolvedPath;
 
-                var embedded = Path.Combine(Application.dataPath, "Framework", "Tech-Cosmos.Hub");
-                _hubRoot = embedded;
-                return _hubRoot;
+                return Path.Combine(Application.dataPath, "Framework", "Tech-Cosmos.Hub");
             }
         }
 
-        /// <summary>包在 Unity 工程内的资源路径，如 Packages/com.techcosmos.hub。</summary>
         public static string HubAssetPath
         {
             get
             {
-                if (!string.IsNullOrEmpty(_hubAssetPath)) return _hubAssetPath;
-
                 var info = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(HubPaths).Assembly);
                 if (info != null && !string.IsNullOrEmpty(info.assetPath))
-                {
-                    _hubAssetPath = info.assetPath.Replace('\\', '/');
-                    return _hubAssetPath;
-                }
+                    return info.assetPath.Replace('\\', '/');
 
-                _hubAssetPath = "Assets/Framework/Tech-Cosmos.Hub";
-                return _hubAssetPath;
+                return "Assets/Framework/Tech-Cosmos.Hub";
             }
         }
 
