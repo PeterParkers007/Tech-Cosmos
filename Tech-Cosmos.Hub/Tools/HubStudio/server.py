@@ -15,9 +15,7 @@ STUDIO_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 def resolve_hub_root() -> str:
-    """本包根目录 = 本脚本所在 Tools/HubStudio 的上两级。"""
-    if os.environ.get("HUB_ROOT"):
-        return os.path.abspath(os.environ["HUB_ROOT"])
+    """本包根目录 = server.py 所在 Tools/HubStudio 的上两级（只认脚本位置，不认环境变量）。"""
     return os.path.abspath(os.path.join(STUDIO_ROOT, "..", ".."))
 
 
@@ -170,6 +168,20 @@ def build_meta() -> dict:
     }
 
 
+def write_running_manifest() -> None:
+    manifest = {
+        "pid": os.getpid(),
+        "studioRoot": STUDIO_ROOT,
+        "hubRoot": HUB_ROOT,
+        "dataDir": DATA_DIR,
+        "port": PORT,
+    }
+    path = os.path.join(STUDIO_ROOT, ".running.json")
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(manifest, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+
+
 class HubStudioHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=STUDIO_ROOT, **kwargs)
@@ -301,7 +313,9 @@ def main() -> int:
         return 1
 
     server = HTTPServer(("127.0.0.1", PORT), HubStudioHandler)
+    write_running_manifest()
     print(f"Hub Studio  http://127.0.0.1:{PORT}")
+    print(f"server.py  {os.path.join(STUDIO_ROOT, 'server.py')}")
     print(f"Data        {DATA_DIR}")
     try:
         server.serve_forever()

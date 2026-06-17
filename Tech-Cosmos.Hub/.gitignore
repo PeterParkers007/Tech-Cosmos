@@ -16,3 +16,4 @@
 *.userprefs
 *.DotSettings.user
 Tools/HubStudio/__pycache__/
+Tools/HubStudio/.running.json

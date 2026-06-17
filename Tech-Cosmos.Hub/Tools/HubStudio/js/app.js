@@ -28,14 +28,21 @@ const gitInfo = $("#gitInfo");
 const pathWarnings = $("#pathWarnings");
 const btnSaveAll = $("#btnSaveAll");
 
-function renderPathWarnings(warnings) {
-  if (!warnings?.length) {
+function renderPathWarnings(warnings, meta) {
+  const blocks = [];
+  if (meta?.dataDir) {
+    blocks.push(`<strong>保存到此目录：</strong><code>${escapeHtml(meta.dataDir)}</code>`);
+  }
+  for (const w of warnings || []) {
+    blocks.push(escapeHtml(w));
+  }
+  if (!blocks.length) {
     pathWarnings.classList.add("hidden");
     pathWarnings.innerHTML = "";
     return;
   }
   pathWarnings.classList.remove("hidden");
-  pathWarnings.innerHTML = warnings.map((w) => `<div>${escapeHtml(w)}</div>`).join("");
+  pathWarnings.innerHTML = blocks.map((b) => `<div>${b}</div>`).join("");
 }
 
 function formatMetaLine(meta) {
@@ -61,7 +68,7 @@ async function probeServer() {
     connectionStatus.textContent = "已连接";
     connectionStatus.className = "status-pill status-pill--online";
     metaInfo.textContent = formatMetaLine(state.meta);
-    renderPathWarnings(state.meta.warnings);
+    renderPathWarnings(state.meta.warnings, state.meta);
     await refreshGitStatus();
     return true;
   } catch {
@@ -80,7 +87,7 @@ async function refreshGitStatus() {
   if (!state.online) return;
   try {
     const data = await api("/api/git-status");
-    renderPathWarnings(data.warnings || state.meta?.warnings);
+    renderPathWarnings(data.warnings || state.meta?.warnings, state.meta);
     if (!data.isGitRepo) {
       gitInfo.textContent = "未检测到 Git 仓库";
       return;

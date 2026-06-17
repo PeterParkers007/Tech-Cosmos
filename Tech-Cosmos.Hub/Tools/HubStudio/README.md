@@ -39,9 +39,18 @@ Tools/HubStudio/../../Data/
 2. `git add Data/`（若在 monorepo 子目录里，页脚会显示实际前缀，如 `Tech-Cosmos.Hub/Data/`）
 3. `git commit` → `push`
 
+保存目录固定为 `Tools/HubStudio/../../Data/`（由 **server.py 文件所在位置** 决定）。
+
+## 保存到了别的盘？
+
+8765 端口上可能还跑着**另一份** Hub Studio（例如之前在 D 盘启动过）。`start.ps1` 现在会自动检测并重启；若仍不对：
+
+1. 页顶查看 **「保存到此目录」** 是否为当前这份仓库
+2. 任务管理器结束所有 `python.exe`（或 `netstat -ano | findstr 8765` 后结束对应 PID）
+3. 在本目录重新 `.\start.ps1`
+
 ## 可选环境变量
 
 | 变量 | 说明 |
 |------|------|
 | `HUB_STUDIO_PORT` | 端口，默认 8765 |
-| `HUB_ROOT` | 仅调试时覆盖包根路径 |

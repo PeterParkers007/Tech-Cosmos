@@ -94,6 +94,13 @@ body {
   display: none;
 }
 
+.path-warnings code {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: #b8e6c8;
+  word-break: break-all;
+}
+
 .tabs {
   display: flex;
   gap: 6px;
