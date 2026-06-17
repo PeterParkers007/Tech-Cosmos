@@ -109,12 +109,12 @@ namespace TechCosmos.Hub.Editor
             return File.Exists(full) ? assetPath : null;
         }
 
-        private static PackageInfo FindPackageInfo(PackageCatalogEntry entry)
+        private static UnityEditor.PackageManager.PackageInfo FindPackageInfo(PackageCatalogEntry entry)
         {
             if (string.IsNullOrEmpty(entry?.id)) return null;
             try
             {
-                return PackageInfo.FindForPackageName(entry.id);
+                return UnityEditor.PackageManager.PackageInfo.FindForPackageName(entry.id);
             }
             catch
             {

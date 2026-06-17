@@ -7,7 +7,9 @@ using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+#if UNITY_2022_2_OR_NEWER
 using UnityEngine.UIElements.Experimental;
+#endif
 
 namespace TechCosmos.Hub.Editor
 {
@@ -480,11 +482,13 @@ namespace TechCosmos.Hub.Editor
 
             if (links.Count > 0)
             {
+#if UNITY_2022_2_OR_NEWER
                 label.RegisterCallback<PointerUpLinkTagEvent>(evt =>
                 {
                     if (!string.IsNullOrEmpty(evt.linkID) && links.TryGetValue(evt.linkID, out var url))
                         OpenLink(url, baseDirectory);
                 });
+#endif
             }
 
             return label;
