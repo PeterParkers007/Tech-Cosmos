@@ -187,14 +187,6 @@
       "category": "OS",
       "description": "MOBA 命令映射输入，与 Intent 输入双轨并存",
       "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.OS.InputSystem.git"
-    },
-    {
-      "id": "com.example.newpackage",
-      "folder": "Tech-Cosmos.Example.New",
-      "displayName": "新框架",
-      "category": "Framework",
-      "description": "s",
-      "gitUrl": "sss"
     }
   ]
 }
