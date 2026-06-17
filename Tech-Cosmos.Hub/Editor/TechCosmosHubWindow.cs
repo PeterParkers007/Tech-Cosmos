@@ -560,6 +560,11 @@ namespace TechCosmos.Hub.Editor
             importBtn.SetEnabled(PackageDetector.CanImport(pkg, _catalog));
             btnRow.Add(importBtn);
 
+            var updateLabel = isAssetsMode ? "重新同步" : "更新";
+            var updateBtn = HubUiFactory.Button(updateLabel, "hub-btn hub-btn--accent", () => UpdatePackage(pkg));
+            updateBtn.SetEnabled(PackageDetector.CanUpdate(pkg, _catalog));
+            btnRow.Add(updateBtn);
+
             var removeLabel = isAssetsMode ? "从 Assets 移除" : "从 Manifest 移除";
             var removeBtn = HubUiFactory.Button(removeLabel, "hub-btn hub-btn--danger", () =>
             {
@@ -860,6 +865,31 @@ namespace TechCosmos.Hub.Editor
                 PackagePresence.LocalOnly => HubUiFactory.Badge("本地源可用", "hub-badge--local"),
                 _ => HubUiFactory.Badge("未导入", "hub-badge--missing")
             };
+        }
+
+        private void UpdatePackage(PackageCatalogEntry pkg)
+        {
+            try
+            {
+                PackageInstaller.UpdatePackage(pkg, _catalog);
+
+                if (HubSettings.ImportMode == HubImportMode.GitUpm)
+                {
+                    if (!string.IsNullOrEmpty(pkg.gitUrl))
+                        Client.Add($"{pkg.id}@{pkg.gitUrl}");
+                    _pendingResolve = true;
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("更新完成", $"{pkg.displayName} 已重新同步。", "确定");
+                    EditorApplication.delayCall += ReloadData;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[Hub] 更新失败: {ex.Message}");
+                EditorUtility.DisplayDialog("更新失败", ex.Message, "确定");
+            }
         }
 
         private void ImportPackage(PackageCatalogEntry pkg)

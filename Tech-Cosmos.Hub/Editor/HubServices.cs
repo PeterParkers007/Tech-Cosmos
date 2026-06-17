@@ -79,6 +79,27 @@ namespace TechCosmos.Hub.Editor
             text = Regex.Replace(text, pattern, string.Empty);
             File.WriteAllText(HubPaths.ManifestPath, text, Encoding.UTF8);
         }
+
+        public static void SetDependency(string packageId, string source)
+        {
+            if (string.IsNullOrEmpty(packageId))
+                throw new ArgumentException("packageId 不能为空", nameof(packageId));
+            if (string.IsNullOrEmpty(source))
+                throw new ArgumentException("source 不能为空", nameof(source));
+
+            if (HasDependency(packageId))
+                RemoveDependency(packageId);
+            AddDependency(packageId, source);
+        }
+
+        public static bool TryGetDependency(string packageId, out string source)
+        {
+            source = null;
+            var deps = ReadDependencies();
+            if (!deps.TryGetValue(packageId, out var value)) return false;
+            source = value;
+            return true;
+        }
     }
 
     public enum PackagePresence
@@ -148,6 +169,17 @@ namespace TechCosmos.Hub.Editor
             if (presence == PackagePresence.InManifest) return false;
             return !string.IsNullOrEmpty(entry.gitUrl) || presence == PackagePresence.LocalOnly;
         }
+
+        public static bool CanUpdate(PackageCatalogEntry entry, PackageCatalogFile catalog)
+        {
+            if (entry == null || catalog == null) return false;
+
+            var presence = GetPresence(entry, catalog);
+            if (HubSettings.ImportMode == HubImportMode.AssetsEmbed)
+                return presence == PackagePresence.AssetsEmbedded;
+
+            return presence == PackagePresence.InManifest;
+        }
     }
 
     public static class PackageInstaller
@@ -193,6 +225,61 @@ namespace TechCosmos.Hub.Editor
         public static void RemoveFromManifest(string packageId)
         {
             ManifestHelper.RemoveDependency(packageId);
+        }
+
+        public static bool TryResolveImportSource(
+            PackageCatalogEntry entry, PackageCatalogFile catalog, out string source)
+        {
+            source = null;
+            if (entry == null || catalog == null) return false;
+
+            if (!string.IsNullOrEmpty(entry.gitUrl))
+            {
+                source = entry.gitUrl;
+                return true;
+            }
+
+            var presence = PackageDetector.GetPresence(entry, catalog);
+            if (presence == PackagePresence.LocalOnly)
+            {
+                var root = PackageDetector.ResolvePackageRoot(entry, catalog);
+                source = $"file:../{root}/{entry.folder}".Replace("\\", "/");
+                return true;
+            }
+
+            var localPath = Path.Combine(HubPaths.ProjectRoot, catalog.frameworkRoot, entry.folder);
+            if (Directory.Exists(localPath) && File.Exists(Path.Combine(localPath, "package.json")))
+            {
+                source = $"file:../{catalog.frameworkRoot}/{entry.folder}".Replace("\\", "/");
+                return true;
+            }
+
+            var legacyPath = Path.Combine(HubPaths.ProjectRoot, HubSettings.LegacyFrameworkRoot, entry.folder);
+            if (Directory.Exists(legacyPath) && File.Exists(Path.Combine(legacyPath, "package.json")))
+            {
+                source = $"file:../{HubSettings.LegacyFrameworkRoot}/{entry.folder}".Replace("\\", "/");
+                return true;
+            }
+
+            return false;
+        }
+
+        public static void UpdatePackage(PackageCatalogEntry entry, PackageCatalogFile catalog)
+        {
+            if (!PackageDetector.CanUpdate(entry, catalog))
+                throw new InvalidOperationException($"{entry.displayName} 未安装，无法更新。");
+
+            if (HubSettings.ImportMode == HubImportMode.AssetsEmbed)
+            {
+                PackageAssetsImporter.UpdateInAssets(entry, catalog);
+                return;
+            }
+
+            if (!TryResolveImportSource(entry, catalog, out var source))
+                throw new InvalidOperationException(
+                    $"无法更新 {entry.displayName}：请配置 gitUrl，或先将包放入 {catalog.frameworkRoot}。");
+
+            ManifestHelper.SetDependency(entry.id, source);
         }
 
         public static PackageBatchImportResult ImportPackages(

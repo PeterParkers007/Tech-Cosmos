@@ -62,6 +62,34 @@ namespace TechCosmos.Hub.Editor
                 $"无法嵌入 {entry.displayName}：无本地源目录且 catalog 未配置 gitUrl。");
         }
 
+        public static void UpdateInAssets(PackageCatalogEntry entry, PackageCatalogFile catalog)
+        {
+            if (entry == null) throw new ArgumentNullException(nameof(entry));
+            if (!IsInstalled(entry))
+                throw new InvalidOperationException($"{entry.displayName} 未嵌入，请先导入。");
+
+            var target = GetPackageFullPath(entry);
+
+            if (TryCopyFromPath(ResolveSourcePath(entry, catalog), target))
+            {
+                AssetDatabase.Refresh();
+                Debug.Log($"[Tech-Cosmos Hub] 已从本地源更新: {GetPackageAssetPath(entry)}");
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(entry.gitUrl))
+            {
+                ClearDirectoryContents(target);
+                CloneGitRepository(entry.gitUrl, target);
+                AssetDatabase.Refresh();
+                Debug.Log($"[Tech-Cosmos Hub] 已从 Git 更新: {GetPackageAssetPath(entry)}");
+                return;
+            }
+
+            throw new InvalidOperationException(
+                $"无法更新 {entry.displayName}：无本地源目录且 catalog 未配置 gitUrl。");
+        }
+
         public static void RemoveFromAssets(PackageCatalogEntry entry)
         {
             if (entry == null || !IsInstalled(entry)) return;
@@ -123,6 +151,21 @@ namespace TechCosmos.Hub.Editor
                 var name = Path.GetFileName(dir);
                 if (name is ".git" or ".svn") continue;
                 CopyDirectory(dir, Path.Combine(targetDir, name));
+            }
+        }
+
+        private static void ClearDirectoryContents(string directory)
+        {
+            if (!Directory.Exists(directory)) return;
+
+            foreach (var file in Directory.GetFiles(directory))
+                File.Delete(file);
+
+            foreach (var dir in Directory.GetDirectories(directory))
+            {
+                var name = Path.GetFileName(dir);
+                if (name is ".git" or ".svn") continue;
+                Directory.Delete(dir, true);
             }
         }
 
