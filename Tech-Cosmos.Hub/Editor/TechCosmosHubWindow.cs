@@ -137,6 +137,7 @@ namespace TechCosmos.Hub.Editor
         {
             public VisualElement Top;
             public ScrollView Scroll;
+            public VisualElement ScrollContent;
             public VisualElement Bottom;
         }
 
@@ -150,6 +151,14 @@ namespace TechCosmos.Hub.Editor
 
             shell.Scroll = new ScrollView(ScrollViewMode.Vertical);
             shell.Scroll.AddToClassList("hub-detail-scroll");
+            shell.ScrollContent = new VisualElement();
+            shell.ScrollContent.AddToClassList("hub-detail-scroll-content");
+            shell.ScrollContent.style.flexDirection = FlexDirection.Column;
+            shell.ScrollContent.style.flexShrink = 0;
+            shell.ScrollContent.style.alignItems = Align.Stretch;
+            shell.Scroll.contentContainer.style.flexDirection = FlexDirection.Column;
+            shell.Scroll.contentContainer.style.alignItems = Align.Stretch;
+            shell.Scroll.contentContainer.Add(shell.ScrollContent);
             _detailPanel.Add(shell.Scroll);
 
             if (withBottom)
@@ -162,20 +171,22 @@ namespace TechCosmos.Hub.Editor
             return shell;
         }
 
-        private static void AddMarkdownCard(ScrollView scroll, string markdown, string baseDirectory = null)
+        private static void AddMarkdownCard(VisualElement scrollContent, string markdown, string baseDirectory = null)
         {
             var card = new VisualElement();
             card.AddToClassList("hub-readme-card");
+            card.style.flexShrink = 0;
+            card.style.flexDirection = FlexDirection.Column;
             card.Add(HubMarkdownRenderer.Render(markdown, baseDirectory));
-            scroll.Add(card);
+            scrollContent.Add(card);
         }
 
-        private static void AddReadmeCard(ScrollView scroll, PackageCatalogEntry pkg, PackageCatalogFile catalog)
+        private static void AddReadmeCard(VisualElement scrollContent, PackageCatalogEntry pkg, PackageCatalogFile catalog)
         {
             var markdown = PackageReadmeLoader.LoadPreview(pkg, catalog);
             var readmePath = PackageReadmeLoader.ResolveReadmeFullPath(pkg, catalog);
             var baseDir = string.IsNullOrEmpty(readmePath) ? null : Path.GetDirectoryName(readmePath);
-            AddMarkdownCard(scroll, markdown, baseDir);
+            AddMarkdownCard(scrollContent, markdown, baseDir);
         }
 
         private void BuildHeader()
@@ -617,7 +628,7 @@ namespace TechCosmos.Hub.Editor
 
             shell.Top.Add(btnRow);
             shell.Top.Add(HubUiFactory.Label("介绍 / README", "hub-section-title"));
-            AddReadmeCard(shell.Scroll, pkg, _catalog);
+            AddReadmeCard(shell.ScrollContent, pkg, _catalog);
         }
 
         private void BuildGlueDetail()
@@ -645,7 +656,7 @@ namespace TechCosmos.Hub.Editor
                 status.CanGenerate ? "hub-badge hub-badge--ready" : "hub-badge hub-badge--pending"));
             shell.Top.Add(meta);
 
-            shell.Scroll.Add(HubUiFactory.Label("生成条件", "hub-section-title"));
+            shell.ScrollContent.Add(HubUiFactory.Label("生成条件", "hub-section-title"));
 
             var checklist = new VisualElement();
             checklist.AddToClassList("hub-checklist");
@@ -664,17 +675,17 @@ namespace TechCosmos.Hub.Editor
                         !status.MissingRecipeOutputs.Contains(dep), $"前置: {dep}"));
             }
 
-            shell.Scroll.Add(checklist);
+            shell.ScrollContent.Add(checklist);
 
             if (recipe.needsHeroType)
             {
-                shell.Scroll.Add(HubUiFactory.Label("Hero 类型配置", "hub-section-title"));
-                shell.Scroll.Add(HubUiFactory.Field("类型名", HubSettings.HeroType, v => HubSettings.HeroType = v));
-                shell.Scroll.Add(HubUiFactory.Field("命名空间", HubSettings.HeroNamespace, v => HubSettings.HeroNamespace = v));
+                shell.ScrollContent.Add(HubUiFactory.Label("Hero 类型配置", "hub-section-title"));
+                shell.ScrollContent.Add(HubUiFactory.Field("类型名", HubSettings.HeroType, v => HubSettings.HeroType = v));
+                shell.ScrollContent.Add(HubUiFactory.Field("命名空间", HubSettings.HeroNamespace, v => HubSettings.HeroNamespace = v));
             }
 
-            shell.Scroll.Add(HubUiFactory.Label("详细说明", "hub-section-title"));
-            AddMarkdownCard(shell.Scroll, GlueRecipeDocs.GetDoc(recipe.id));
+            shell.ScrollContent.Add(HubUiFactory.Label("详细说明", "hub-section-title"));
+            AddMarkdownCard(shell.ScrollContent, GlueRecipeDocs.GetDoc(recipe.id));
 
             var btnRow = new VisualElement();
             btnRow.AddToClassList("hub-btn-row");
@@ -790,7 +801,7 @@ namespace TechCosmos.Hub.Editor
                 }
             }
 
-            shell.Scroll.Add(tree);
+            shell.ScrollContent.Add(tree);
 
             var btnRow = new VisualElement();
             btnRow.AddToClassList("hub-btn-row");

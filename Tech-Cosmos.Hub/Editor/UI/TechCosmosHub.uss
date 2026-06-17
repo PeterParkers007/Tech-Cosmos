@@ -243,6 +243,12 @@
     margin-top: 4px;
 }
 
+.hub-detail-scroll-content {
+    flex-direction: column;
+    flex-shrink: 0;
+    align-items: stretch;
+}
+
 /* ── Category & list items ── */
 .hub-category-label {
     font-size: 10px;
@@ -491,6 +497,9 @@
     border-width: 1px;
     border-color: rgb(42, 48, 60);
     margin-top: 8px;
+    flex-shrink: 0;
+    flex-direction: column;
+    overflow: visible;
 }
 
 .hub-section-title {
@@ -503,7 +512,15 @@
 
 /* ── Markdown (README) ── */
 .hub-md {
+    flex-direction: column;
     flex-shrink: 0;
+    align-items: stretch;
+}
+
+.hub-md-block {
+    flex-shrink: 0;
+    flex-grow: 0;
+    flex-direction: column;
 }
 
 .hub-md-empty,
@@ -525,6 +542,9 @@
     margin-bottom: 10px;
     padding-top: 0;
     padding-bottom: 0;
+    flex-shrink: 0;
+    flex-grow: 0;
+    overflow: visible;
 }
 
 .hub-md-h1 {
@@ -534,6 +554,9 @@
     margin-top: 4px;
     margin-bottom: 12px;
     white-space: normal;
+    flex-shrink: 0;
+    flex-grow: 0;
+    overflow: visible;
 }
 
 .hub-md-h2 {
@@ -593,6 +616,8 @@
     padding: 12px 14px;
     margin-top: 8px;
     margin-bottom: 12px;
+    flex-shrink: 0;
+    flex-direction: column;
 }
 
 .hub-md-code {

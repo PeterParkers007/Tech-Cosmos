@@ -36,7 +36,7 @@ namespace TechCosmos.Hub.Editor
             string text;
 
             if (!string.IsNullOrEmpty(path) && File.Exists(path))
-                text = File.ReadAllText(path);
+                text = HubMarkdownRenderer.NormalizeLineEndings(File.ReadAllText(path));
             else
             {
                 var root = PackageDetector.ResolvePackageRoot(entry, catalog);

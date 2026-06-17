@@ -26,10 +26,19 @@ namespace TechCosmos.Hub.Editor
         private static readonly Regex HrRegex = new(@"^(\*{3,}|-{3,}|_{3,})\s*$", RegexOptions.Compiled);
         private static readonly Regex TableSepRegex = new(@"^\|?[\s:\-|]+\|?$", RegexOptions.Compiled);
 
+        internal static string NormalizeLineEndings(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text ?? string.Empty;
+            return text.Replace("\r\n", "\n").Replace('\r', '\n');
+        }
+
         public static VisualElement Render(string markdown, string baseDirectory = null, int maxChars = 24000)
         {
             var root = new VisualElement();
             root.AddToClassList("hub-md");
+            root.style.flexDirection = FlexDirection.Column;
+            root.style.flexShrink = 0;
+            root.style.alignItems = Align.Stretch;
 
             if (string.IsNullOrWhiteSpace(markdown))
             {
@@ -44,11 +53,12 @@ namespace TechCosmos.Hub.Editor
                 truncated = true;
             }
 
-            var lines = markdown.Replace("\r\n", "\n").Split('\n');
+            markdown = NormalizeLineEndings(markdown);
+            var lines = markdown.Split('\n');
             var blocks = ParseBlocks(lines);
 
             foreach (var block in blocks)
-                root.Add(RenderBlock(block, baseDirectory));
+                root.Add(WrapBlock(RenderBlock(block, baseDirectory)));
 
             if (truncated)
                 root.Add(MakePlainLabel("…（已截断，点击「打开 README」查看完整文件）", "hub-md-truncate"));
@@ -340,7 +350,8 @@ namespace TechCosmos.Hub.Editor
             {
                 var scroll = new ScrollView(ScrollViewMode.Horizontal);
                 scroll.AddToClassList("hub-md-table-scroll");
-                scroll.Add(table);
+                scroll.contentContainer.style.flexDirection = FlexDirection.Row;
+                scroll.contentContainer.Add(table);
                 return scroll;
             }
 
@@ -462,11 +473,32 @@ namespace TechCosmos.Hub.Editor
             return cells;
         }
 
+        private static VisualElement WrapBlock(VisualElement content)
+        {
+            if (content == null) return new VisualElement();
+
+            var wrap = new VisualElement();
+            wrap.AddToClassList("hub-md-block");
+            wrap.style.flexShrink = 0;
+            wrap.style.flexGrow = 0;
+            wrap.style.flexDirection = FlexDirection.Column;
+            wrap.Add(content);
+            return wrap;
+        }
+
+        private static void ConfigureBlockLabel(Label label)
+        {
+            label.style.whiteSpace = WhiteSpace.Normal;
+            label.style.flexShrink = 0;
+            label.style.flexGrow = 0;
+            label.style.overflow = Overflow.Visible;
+        }
+
         private static Label MakePlainLabel(string text, string className)
         {
             var label = new Label(text) { text = text, enableRichText = false };
             if (!string.IsNullOrEmpty(className)) label.AddToClassList(className);
-            label.style.whiteSpace = WhiteSpace.Normal;
+            ConfigureBlockLabel(label);
             return label;
         }
 
@@ -478,7 +510,7 @@ namespace TechCosmos.Hub.Editor
 
             var label = new Label { text = richText, enableRichText = true };
             if (!string.IsNullOrEmpty(className)) label.AddToClassList(className);
-            label.style.whiteSpace = WhiteSpace.Normal;
+            ConfigureBlockLabel(label);
 
             if (links.Count > 0)
             {
