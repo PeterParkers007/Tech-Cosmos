@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tech-Cosmos Hub Studio — 在 Hub 仓库根目录编辑 Data/，保存后直接 git commit。"""
+"""Hub Studio — 编辑本仓库 Data/ 下的 JSON 与模板文件。"""
 
 from __future__ import annotations
 
@@ -12,9 +12,16 @@ from urllib.parse import unquote, urlparse
 
 PORT = int(os.environ.get("HUB_STUDIO_PORT", "8765"))
 STUDIO_ROOT = os.path.dirname(os.path.abspath(__file__))
-HUB_ROOT = os.path.abspath(
-    os.environ.get("HUB_ROOT") or os.path.join(STUDIO_ROOT, "..", "..")
-)
+
+
+def resolve_hub_root() -> str:
+    """本包根目录 = 本脚本所在 Tools/HubStudio 的上两级。"""
+    if os.environ.get("HUB_ROOT"):
+        return os.path.abspath(os.environ["HUB_ROOT"])
+    return os.path.abspath(os.path.join(STUDIO_ROOT, "..", ".."))
+
+
+HUB_ROOT = resolve_hub_root()
 DATA_DIR = os.path.join(HUB_ROOT, "Data")
 TEMPLATES_DIR = os.path.join(DATA_DIR, "Templates")
 
@@ -47,22 +54,94 @@ def write_json(path: str, data: dict) -> None:
         f.write("\n")
 
 
-def is_git_repo() -> bool:
-    return os.path.isdir(os.path.join(HUB_ROOT, ".git"))
-
-
-def git_porcelain(paths: list[str] | None = None) -> list[str]:
-    if not is_git_repo():
-        return []
-    args = ["git", "status", "--porcelain"]
-    if paths:
-        args.extend(paths)
+def git_toplevel() -> str | None:
     try:
         result = subprocess.run(
-            args,
+            ["git", "rev-parse", "--show-toplevel"],
             cwd=HUB_ROOT,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=8,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode != 0 or not result.stdout:
+        return None
+    path = result.stdout.strip()
+    return os.path.abspath(path) if path else None
+
+
+def is_git_repo() -> bool:
+    return git_toplevel() is not None
+
+
+def git_remote_url() -> str | None:
+    top = git_toplevel()
+    if not top:
+        return None
+    try:
+        result = subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            cwd=top,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=8,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode != 0:
+        return None
+    url = result.stdout.strip()
+    return url or None
+
+
+def hub_path_in_git() -> str | None:
+    """Hub 包目录相对于 Git 仓库根的路径，空字符串表示 Hub 即仓库根。"""
+    top = git_toplevel()
+    if not top:
+        return None
+    hub = os.path.normcase(os.path.normpath(HUB_ROOT))
+    top_n = os.path.normcase(os.path.normpath(top))
+    if hub == top_n:
+        return ""
+    if hub.startswith(top_n + os.sep):
+        return os.path.relpath(HUB_ROOT, top).replace("\\", "/")
+    return None
+
+
+def git_data_prefix() -> str:
+    """git add / status 时使用的 Data 路径前缀（相对 Git 仓库根）。"""
+    rel = hub_path_in_git()
+    if rel is None:
+        return "Data/"
+    return f"{rel}/Data/" if rel else "Data/"
+
+
+def build_warnings() -> list[str]:
+    if git_toplevel() is None:
+        return ["未检测到 Git 仓库；保存仍有效，但无法用 git 跟踪变更。"]
+    return []
+
+
+def git_porcelain() -> list[str]:
+    top = git_toplevel()
+    if not top:
+        return []
+    data_prefix = git_data_prefix()
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain", data_prefix],
+            cwd=top,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=8,
             check=False,
         )
@@ -71,6 +150,24 @@ def git_porcelain(paths: list[str] | None = None) -> list[str]:
     if result.returncode != 0:
         return []
     return [line for line in result.stdout.splitlines() if line.strip()]
+
+
+def build_meta() -> dict:
+    top = git_toplevel()
+    rel = hub_path_in_git()
+    return {
+        "hubRoot": HUB_ROOT,
+        "studioRoot": STUDIO_ROOT,
+        "gitTopLevel": top,
+        "hubPathInGit": rel if rel is not None else None,
+        "gitDataPrefix": git_data_prefix(),
+        "gitRemote": git_remote_url(),
+        "dataDir": DATA_DIR,
+        "templatesDir": TEMPLATES_DIR,
+        "port": PORT,
+        "isGitRepo": top is not None,
+        "warnings": build_warnings(),
+    }
 
 
 class HubStudioHandler(SimpleHTTPRequestHandler):
@@ -95,21 +192,18 @@ class HubStudioHandler(SimpleHTTPRequestHandler):
         path = parsed.path
 
         if path == "/api/meta":
-            json_response(self, 200, {
-                "hubRoot": HUB_ROOT,
-                "dataDir": DATA_DIR,
-                "templatesDir": TEMPLATES_DIR,
-                "port": PORT,
-                "isGitRepo": is_git_repo(),
-            })
+            json_response(self, 200, build_meta())
             return
 
         if path == "/api/git-status":
-            changed = git_porcelain(["Data/"])
+            meta = build_meta()
             json_response(self, 200, {
-                "isGitRepo": is_git_repo(),
-                "changed": changed,
-                "hubRoot": HUB_ROOT,
+                "isGitRepo": meta["isGitRepo"],
+                "gitTopLevel": meta["gitTopLevel"],
+                "hubRoot": meta["hubRoot"],
+                "gitDataPrefix": meta["gitDataPrefix"],
+                "changed": git_porcelain(),
+                "warnings": meta["warnings"],
             })
             return
 
@@ -203,14 +297,12 @@ class HubStudioHandler(SimpleHTTPRequestHandler):
 def main() -> int:
     if not os.path.isdir(DATA_DIR):
         print(f"ERROR: Hub Data directory not found: {DATA_DIR}", file=sys.stderr)
-        print("请在 Tech-Cosmos.Hub 仓库内运行，或设置环境变量 HUB_ROOT。", file=sys.stderr)
+        print("请在 Tech-Cosmos.Hub 包内运行（Tools/HubStudio 的上两级应含 Data/）。", file=sys.stderr)
         return 1
 
     server = HTTPServer(("127.0.0.1", PORT), HubStudioHandler)
     print(f"Hub Studio  http://127.0.0.1:{PORT}")
-    print(f"Hub 仓库    {HUB_ROOT}")
-    if is_git_repo():
-        print("Git 仓库已识别 — 保存后可 git add Data/ && git commit")
+    print(f"Data        {DATA_DIR}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

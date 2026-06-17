@@ -1,13 +1,12 @@
 $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$hubRoot = Resolve-Path (Join-Path $here "..\..")
 Set-Location $here
 
+$dataDir = (Resolve-Path (Join-Path $here "..\..\Data")).Path
 $port = if ($env:HUB_STUDIO_PORT) { $env:HUB_STUDIO_PORT } else { "8765" }
 $url = "http://127.0.0.1:$port"
 
-Write-Host "Hub 仓库: $hubRoot"
-Write-Host "Studio:   $here"
+Write-Host "Data: $dataDir"
 
 function Test-HubStudioUp {
     try {
@@ -25,7 +24,7 @@ if (-not (Test-HubStudioUp)) {
             $parts = $cmd -split " ", 2
             $exe = $parts[0]
             $args = if ($parts.Length -gt 1) { $parts[1] } else { "" }
-            & $exe $args -c "import sys; print(sys.version)" 2>$null | Out-Null
+            & $exe $args -c "import sys" 2>$null | Out-Null
             if ($LASTEXITCODE -eq 0) {
                 $python = @{ Exe = $exe; Args = $args }
                 break
@@ -34,12 +33,11 @@ if (-not (Test-HubStudioUp)) {
     }
 
     if (-not $python) {
-        Write-Host "未找到 Python 3。请安装后在本目录运行: python server.py" -ForegroundColor Red
+        Write-Host "未找到 Python 3。运行: python server.py" -ForegroundColor Red
         exit 1
     }
 
     $pyLine = if ($python.Args) { "$($python.Exe) $($python.Args) server.py" } else { "$($python.Exe) server.py" }
-    Write-Host "启动 Hub Studio ($pyLine) ..."
     Start-Process -FilePath "cmd.exe" -ArgumentList "/c $pyLine" -WorkingDirectory $here -WindowStyle Minimized
 
     for ($i = 0; $i -lt 20; $i++) {
@@ -50,14 +48,7 @@ if (-not (Test-HubStudioUp)) {
 
 if (Test-HubStudioUp) {
     Start-Process $url
-    Write-Host ""
-    Write-Host "已打开 $url"
-    Write-Host "编辑后保存，然后在仓库根目录提交:"
-    Write-Host "  cd $hubRoot"
-    Write-Host "  git add Data/"
-    Write-Host "  git commit -m ""hub: your message"""
-    Write-Host "  git push origin main"
 } else {
-    Write-Host "服务启动失败。请手动运行: python server.py" -ForegroundColor Red
+    Write-Host "启动失败。运行: python server.py" -ForegroundColor Red
     exit 1
 }

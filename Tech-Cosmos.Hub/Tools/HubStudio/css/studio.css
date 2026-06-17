@@ -79,6 +79,21 @@ body {
   background: rgba(201, 162, 39, 0.08);
 }
 
+.path-warnings {
+  margin: 0 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(201, 162, 39, 0.12);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  color: #e8c86a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.path-warnings.hidden {
+  display: none;
+}
+
 .tabs {
   display: flex;
   gap: 6px;

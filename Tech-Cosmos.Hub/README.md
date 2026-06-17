@@ -32,24 +32,15 @@ https://github.com/PeterParkers007/Tech-Cosmos.git?path=/Tech-Cosmos.Hub
 
 项目结构、胶水生成等功能均在 Hub 面板内操作。
 
-## 维护 Hub 包（与 Unity 无关）
+## 维护本仓库数据
 
-在 **Tech-Cosmos.Hub 仓库**中扩展框架列表、胶水 Recipe、项目结构：
-
-```powershell
-cd Tools/HubStudio
-./start.ps1
-```
-
-编辑并保存后，于仓库根目录提交：
+编辑框架列表、胶水 Recipe、项目结构：
 
 ```bash
-git add Data/
-git commit -m "hub: 描述扩展"
-git push origin main
+cd Tools/HubStudio && python server.py
 ```
 
-详见 [Tools/HubStudio/README.md](Tools/HubStudio/README.md)。
+保存后 `git add Data/` 并提交。详见 [Tools/HubStudio/README.md](Tools/HubStudio/README.md)。
 
 ## 功能
 

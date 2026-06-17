@@ -61,14 +61,6 @@
       "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.ResourceManager.git"
     },
     {
-      "id": "com.tech-cosmos.unitcore",
-      "folder": "Tech-Cosmos.Component.UnitCore",
-      "displayName": "Unit Core",
-      "category": "Component",
-      "description": "工业级单位核心",
-      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Component.UnitCore.git"
-    },
-    {
       "id": "com.techcosmos.command-system",
       "folder": "Tech-Cosmos.Component.CommandSystem",
       "displayName": "Command System",
@@ -195,6 +187,14 @@
       "category": "OS",
       "description": "MOBA 命令映射输入，与 Intent 输入双轨并存",
       "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.OS.InputSystem.git"
+    },
+    {
+      "id": "com.example.newpackage",
+      "folder": "Tech-Cosmos.Example.New",
+      "displayName": "新框架",
+      "category": "Framework",
+      "description": "s",
+      "gitUrl": "sss"
     }
   ]
 }

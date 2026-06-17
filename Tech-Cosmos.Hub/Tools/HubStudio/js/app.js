@@ -25,7 +25,23 @@ const connectionStatus = $("#connectionStatus");
 const metaInfo = $("#metaInfo");
 const dirtyInfo = $("#dirtyInfo");
 const gitInfo = $("#gitInfo");
+const pathWarnings = $("#pathWarnings");
 const btnSaveAll = $("#btnSaveAll");
+
+function renderPathWarnings(warnings) {
+  if (!warnings?.length) {
+    pathWarnings.classList.add("hidden");
+    pathWarnings.innerHTML = "";
+    return;
+  }
+  pathWarnings.classList.remove("hidden");
+  pathWarnings.innerHTML = warnings.map((w) => `<div>${escapeHtml(w)}</div>`).join("");
+}
+
+function formatMetaLine(meta) {
+  if (!meta) return "—";
+  return `Data: ${meta.dataDir}`;
+}
 
 const CATEGORIES = [
   "Foundation", "Framework", "Component", "Infra", "Runtime", "Module", "Pipeline", "Tool", "OS", "Other",
@@ -42,9 +58,10 @@ async function probeServer() {
   try {
     state.meta = await api("/api/meta");
     state.online = true;
-    connectionStatus.textContent = "已连接仓库";
+    connectionStatus.textContent = "已连接";
     connectionStatus.className = "status-pill status-pill--online";
-    metaInfo.textContent = state.meta.hubRoot || "—";
+    metaInfo.textContent = formatMetaLine(state.meta);
+    renderPathWarnings(state.meta.warnings);
     await refreshGitStatus();
     return true;
   } catch {
@@ -52,8 +69,9 @@ async function probeServer() {
     state.meta = null;
     connectionStatus.textContent = "未连接 — 请运行 start.ps1";
     connectionStatus.className = "status-pill status-pill--offline";
-    metaInfo.textContent = "在 Hub 仓库的 Tools/HubStudio 目录启动 python server.py";
+    metaInfo.textContent = "在 Tools/HubStudio 目录运行: python server.py";
     gitInfo.textContent = "";
+    renderPathWarnings([]);
     return false;
   }
 }
@@ -62,15 +80,17 @@ async function refreshGitStatus() {
   if (!state.online) return;
   try {
     const data = await api("/api/git-status");
+    renderPathWarnings(data.warnings || state.meta?.warnings);
     if (!data.isGitRepo) {
-      gitInfo.textContent = "（当前目录不是 git 仓库）";
+      gitInfo.textContent = "未检测到 Git 仓库";
       return;
     }
+    const prefix = data.gitDataPrefix || "Data/";
     if (!data.changed?.length) {
-      gitInfo.textContent = "Data/ 无未提交变更";
+      gitInfo.textContent = `${prefix} 无未提交变更`;
       return;
     }
-    gitInfo.textContent = `待提交 ${data.changed.length} 项 — git add Data/ && git commit`;
+    gitInfo.textContent = `待提交 ${data.changed.length} 项 → git add ${prefix}`;
   } catch {
     gitInfo.textContent = "";
   }
@@ -414,7 +434,7 @@ async function renderEditor() {
         <input type="checkbox" id="needsHeroType" ${r.needsHeroType ? "checked" : ""} />
         <label for="needsHeroType">需要 Hero 类型配置（needsHeroType）</label>
       </div>
-      ${field("Hub 详情文档 doc", "doc", r.doc, { type: "textarea", rows: 8, hint: "Markdown 纯文本，显示在 Unity Hub 胶水详情页" })}
+      ${field("详细说明 doc", "doc", r.doc, { type: "textarea", rows: 8, hint: "Markdown 纯文本，可选" })}
       <div class="field-hint">全局输出目录：${escapeHtml(state.recipes.outputRoot)}（在「保存全部」前可于 JSON 根级编辑）</div>
       ${field("outputRoot", "outputRoot", state.recipes.outputRoot)}
       <div class="form-actions">
@@ -651,13 +671,15 @@ async function saveAll() {
   await refreshGitStatus();
   render();
 
+  const prefix = state.meta?.gitDataPrefix || "Data/";
+  const gitTop = state.meta?.gitTopLevel || "<Git 仓库根>";
   const lines = [
-    "已保存到 Data/ 目录。",
+    "已保存。",
     "",
-    "在 Hub 仓库根目录执行：",
-    "  git add Data/",
-    '  git commit -m "hub: 描述本次扩展"',
-    "  git push origin main",
+    `cd ${gitTop}`,
+    `git add ${prefix}`,
+    'git commit -m "hub: 描述本次扩展"',
+    "git push origin main",
   ];
   alert(lines.join("\n"));
 }
