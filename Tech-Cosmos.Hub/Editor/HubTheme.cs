@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
-using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UpmPackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace TechCosmos.Hub.Editor
 {
@@ -42,57 +42,53 @@ namespace TechCosmos.Hub.Editor
             foreach (var path in CollectPaths())
             {
                 if (string.IsNullOrEmpty(path)) continue;
-                path = path.Replace('\\', '/');
-                if (seen.Add(path))
-                    yield return path;
+                var normalized = path.Replace('\\', '/');
+                if (seen.Add(normalized))
+                    yield return normalized;
             }
         }
 
         private static IEnumerable<string> CollectPaths()
         {
             var seen = new HashSet<string>();
+            var results = new List<string>();
 
-            string TryAdd(string path)
+            void Add(string path)
             {
-                if (string.IsNullOrEmpty(path)) return null;
+                if (string.IsNullOrEmpty(path)) return;
                 path = path.Replace('\\', '/');
-                return seen.Add(path) ? path : null;
+                if (seen.Add(path))
+                    results.Add(path);
             }
 
-            var fromHub = TryAdd($"{HubPaths.HubAssetPath}/{StylesheetRelative}");
-            if (fromHub != null) yield return fromHub;
+            Add($"{HubPaths.HubAssetPath}/{StylesheetRelative}");
 
+            UpmPackageInfo info = null;
             try
             {
-                var info = PackageInfo.FindForPackageName(HubCatalog.SelfPackageId);
-                if (info != null && !string.IsNullOrEmpty(info.assetPath))
-                {
-                    var fromPkg = TryAdd($"{info.assetPath}/{StylesheetRelative}");
-                    if (fromPkg != null) yield return fromPkg;
-                }
+                info = UpmPackageInfo.FindForPackageName(HubCatalog.SelfPackageId);
             }
             catch
             {
                 // ignored
             }
 
+            if (info != null && !string.IsNullOrEmpty(info.assetPath))
+                Add($"{info.assetPath}/{StylesheetRelative}");
+
             var guids = AssetDatabase.FindAssets("TechCosmosHub t:StyleSheet");
             foreach (var guid in guids)
-            {
-                var fromSearch = TryAdd(AssetDatabase.GUIDToAssetPath(guid));
-                if (fromSearch != null) yield return fromSearch;
-            }
+                Add(AssetDatabase.GUIDToAssetPath(guid));
 
             var disk = Path.Combine(HubPaths.HubRoot, StylesheetRelative.Replace('/', Path.DirectorySeparatorChar));
             if (File.Exists(disk))
             {
                 var relative = ToProjectRelativeAssetPath(disk);
                 if (!string.IsNullOrEmpty(relative))
-                {
-                    var fromDisk = TryAdd(relative);
-                    if (fromDisk != null) yield return fromDisk;
-                }
+                    Add(relative);
             }
+
+            return results;
         }
 
         private static string ToProjectRelativeAssetPath(string fullPath)
