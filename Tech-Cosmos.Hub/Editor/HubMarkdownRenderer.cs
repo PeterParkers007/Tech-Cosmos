@@ -2,29 +2,33 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-#if UNITY_2022_2_OR_NEWER
-using UnityEngine.UIElements.Experimental;
-#endif
 
 namespace TechCosmos.Hub.Editor
 {
     internal static class HubMarkdownRenderer
     {
-        private static readonly Regex LinkInlineRegex = new(@"\[([^\]]+)\]\(([^)]+)\)", RegexOptions.Compiled);
-        private static readonly Regex CodeInlineRegex = new(@"`([^`]+)`", RegexOptions.Compiled);
-        private static readonly Regex BoldInlineRegex = new(@"\*\*([^*]+)\*\*", RegexOptions.Compiled);
-        private static readonly Regex ItalicInlineRegex = new(@"(?<!\*)\*([^*]+)\*(?!\*)", RegexOptions.Compiled);
-
         private static readonly Regex HeadingRegex = new(@"^(#{1,6})\s+(.+)$", RegexOptions.Compiled);
         private static readonly Regex UlRegex = new(@"^[\-*+]\s+(.+)$", RegexOptions.Compiled);
         private static readonly Regex OlRegex = new(@"^\d+\.\s+(.+)$", RegexOptions.Compiled);
         private static readonly Regex HrRegex = new(@"^(\*{3,}|-{3,}|_{3,})\s*$", RegexOptions.Compiled);
         private static readonly Regex TableSepRegex = new(@"^\|?[\s:\-|]+\|?$", RegexOptions.Compiled);
+
+        private static readonly Regex MeasureLinkedImageRegex =
+            new(@"\[!\[([^\]]*)\]\(([^)]+)\)\]\(([^)]+)\)", RegexOptions.Compiled);
+
+        private static readonly Regex MeasureImageRegex =
+            new(@"!\[([^\]]*)\]\(([^)]+)\)", RegexOptions.Compiled);
+
+        private static readonly Regex MeasureLinkRegex =
+            new(@"\[([^\]]+)\]\(([^)]+)\)", RegexOptions.Compiled);
+
+        private static readonly Regex MeasureCodeRegex = new(@"`([^`]+)`", RegexOptions.Compiled);
+        private static readonly Regex MeasureBoldRegex = new(@"\*\*([^*]+)\*\*", RegexOptions.Compiled);
+        private static readonly Regex MeasureItalicRegex = new(@"(?<!\*)\*([^*]+)\*(?!\*)", RegexOptions.Compiled);
 
         internal static string NormalizeLineEndings(string text)
         {
@@ -63,6 +67,8 @@ namespace TechCosmos.Hub.Editor
             if (truncated)
                 root.Add(MakePlainLabel("…（已截断，点击「打开 README」查看完整文件）", "hub-md-truncate"));
 
+            HubMarkdownFonts.ApplyEmojiTree(root);
+            HubMarkdownLayout.ApplyTree(root);
             return root;
         }
 
@@ -147,36 +153,14 @@ namespace TechCosmos.Hub.Editor
                 var ul = UlRegex.Match(trimmed);
                 if (ul.Success)
                 {
-                    var items = new List<string>();
-                    while (i < lines.Length)
-                    {
-                        var itemLine = lines[i].TrimEnd();
-                        if (string.IsNullOrWhiteSpace(itemLine)) break;
-                        var m = UlRegex.Match(itemLine.Trim());
-                        if (!m.Success) break;
-                        items.Add(m.Groups[1].Value);
-                        i++;
-                    }
-
-                    blocks.Add(new MdBlock(MdBlockKind.UnorderedList, items));
+                    blocks.Add(ParseListBlock(lines, ref i, ordered: false));
                     continue;
                 }
 
                 var ol = OlRegex.Match(trimmed);
                 if (ol.Success)
                 {
-                    var items = new List<string>();
-                    while (i < lines.Length)
-                    {
-                        var itemLine = lines[i].TrimEnd();
-                        if (string.IsNullOrWhiteSpace(itemLine)) break;
-                        var m = OlRegex.Match(itemLine.Trim());
-                        if (!m.Success) break;
-                        items.Add(m.Groups[1].Value);
-                        i++;
-                    }
-
-                    blocks.Add(new MdBlock(MdBlockKind.OrderedList, items));
+                    blocks.Add(ParseListBlock(lines, ref i, ordered: true));
                     continue;
                 }
 
@@ -209,22 +193,84 @@ namespace TechCosmos.Hub.Editor
             return trimmed.Contains('|');
         }
 
+        private static MdBlock ParseListBlock(string[] lines, ref int i, bool ordered)
+        {
+            var regex = ordered ? OlRegex : UlRegex;
+            var items = new List<MdListItem>();
+
+            while (i < lines.Length)
+            {
+                var itemLine = lines[i].TrimEnd();
+                if (string.IsNullOrWhiteSpace(itemLine)) break;
+
+                var match = regex.Match(itemLine.Trim());
+                if (!match.Success) break;
+
+                i++;
+                var children = ParseIndentedChildren(lines, ref i);
+                items.Add(new MdListItem(match.Groups[1].Value, children));
+            }
+
+            return new MdBlock(ordered ? MdBlockKind.OrderedList : MdBlockKind.UnorderedList, items);
+        }
+
+        private static List<MdBlock> ParseIndentedChildren(string[] lines, ref int i)
+        {
+            var children = new List<MdBlock>();
+            while (i < lines.Length)
+            {
+                var line = lines[i];
+                if (string.IsNullOrWhiteSpace(line)) break;
+                if (CountLeadingWhitespace(line) < 2) break;
+
+                var trimmed = line.Trim();
+                if (UlRegex.IsMatch(trimmed))
+                {
+                    children.Add(ParseListBlock(lines, ref i, ordered: false));
+                    continue;
+                }
+
+                if (OlRegex.IsMatch(trimmed))
+                {
+                    children.Add(ParseListBlock(lines, ref i, ordered: true));
+                    continue;
+                }
+
+                break;
+            }
+
+            return children;
+        }
+
+        private static int CountLeadingWhitespace(string line)
+        {
+            if (string.IsNullOrEmpty(line)) return 0;
+            var count = 0;
+            foreach (var ch in line)
+            {
+                if (ch == ' ' || ch == '\t') count++;
+                else break;
+            }
+
+            return count;
+        }
+
         private static VisualElement RenderBlock(MdBlock block, string baseDirectory)
         {
             switch (block.Kind)
             {
                 case MdBlockKind.Heading:
-                    return MakeRichLabel(block.Text, $"hub-md-h{Mathf.Clamp(block.Level, 1, 6)}", baseDirectory);
+                    return HubMarkdownInline.Render(block.Text, $"hub-md-h{Mathf.Clamp(block.Level, 1, 6)}", baseDirectory);
                 case MdBlockKind.Paragraph:
-                    return MakeRichLabel(block.Text, "hub-md-p", baseDirectory);
+                    return HubMarkdownInline.Render(block.Text, "hub-md-p", baseDirectory);
                 case MdBlockKind.Code:
                     return RenderCodeBlock(block.Lines);
                 case MdBlockKind.Quote:
                     return RenderQuote(block.Lines, baseDirectory);
                 case MdBlockKind.UnorderedList:
-                    return RenderList(block.Lines, ordered: false, baseDirectory);
+                    return RenderList(block, ordered: false, baseDirectory);
                 case MdBlockKind.OrderedList:
-                    return RenderList(block.Lines, ordered: true, baseDirectory);
+                    return RenderList(block, ordered: true, baseDirectory);
                 case MdBlockKind.Hr:
                     return RenderHr();
                 case MdBlockKind.Table:
@@ -249,27 +295,43 @@ namespace TechCosmos.Hub.Editor
             quote.AddToClassList("hub-md-blockquote");
 
             foreach (var line in lines)
-                quote.Add(MakeRichLabel(line, "hub-md-quote-line", baseDirectory));
+                quote.Add(HubMarkdownInline.Render(line, "hub-md-quote-line", baseDirectory));
 
             return quote;
         }
 
-        private static VisualElement RenderList(IReadOnlyList<string> items, bool ordered, string baseDirectory)
+        private static VisualElement RenderList(MdBlock block, bool ordered, string baseDirectory)
         {
             var list = new VisualElement();
             list.AddToClassList(ordered ? "hub-md-ol" : "hub-md-ul");
 
+            var items = block.ListItems;
+            if (items == null) return list;
+
             for (var i = 0; i < items.Count; i++)
             {
+                var item = items[i];
                 var li = new VisualElement();
                 li.AddToClassList("hub-md-li");
+                HubMarkdownLayout.ApplyListItem(li);
 
-                li.Add(MakePlainLabel(ordered ? $"{i + 1}." : "•", "hub-md-li-marker"));
+                var marker = MakePlainLabel(ordered ? $"{i + 1}." : "•", "hub-md-li-marker");
+                HubMarkdownLayout.ApplyListMarker(marker);
+                li.Add(marker);
 
-                var content = MakeRichLabel(items[i], "hub-md-li-text", baseDirectory);
-                content.AddToClassList("hub-md-li-content");
-                li.Add(content);
+                var body = new VisualElement();
+                body.AddToClassList("hub-md-li-body");
+                HubMarkdownLayout.ApplyListBody(body);
 
+                body.Add(HubMarkdownInline.Render(item.Text, "hub-md-li-text", baseDirectory));
+
+                if (item.Children != null)
+                {
+                    foreach (var child in item.Children)
+                        body.Add(WrapBlock(RenderBlock(child, baseDirectory)));
+                }
+
+                li.Add(body);
                 list.Add(li);
             }
 
@@ -338,7 +400,7 @@ namespace TechCosmos.Hub.Editor
                     ApplyTableColumnWidth(cell, colWidths[c]);
 
                     var text = c < rows[r].Count ? rows[r][c].Trim() : string.Empty;
-                    cell.Add(MakeTableCellLabel(text, isHeader, baseDirectory));
+                    cell.Add(MakeTableCellContent(text, isHeader, baseDirectory));
                     rowEl.Add(cell);
                 }
 
@@ -377,22 +439,22 @@ namespace TechCosmos.Hub.Editor
         private static bool IsTableSeparatorLine(string line)
             => !string.IsNullOrWhiteSpace(line) && TableSepRegex.IsMatch(line.Trim());
 
-        private static Label MakeTableCellLabel(string text, bool isHeader, string baseDirectory)
+        private static VisualElement MakeTableCellContent(string text, bool isHeader, string baseDirectory)
         {
-            Label label;
+            VisualElement content;
             if (isHeader || !ContainsInlineMarkdown(text))
             {
-                label = MakePlainLabel(
+                content = MakePlainLabel(
                     text,
                     isHeader ? "hub-md-cell hub-md-cell--head" : "hub-md-cell");
             }
             else
             {
-                label = MakeRichLabel(text, "hub-md-cell", baseDirectory);
+                content = HubMarkdownInline.Render(text, "hub-md-cell", baseDirectory);
             }
 
-            ConfigureTableCellLabel(label);
-            return label;
+            ConfigureTableCellContent(content);
+            return content;
         }
 
         private static bool ContainsInlineMarkdown(string text)
@@ -400,7 +462,9 @@ namespace TechCosmos.Hub.Editor
             if (string.IsNullOrEmpty(text)) return false;
             return text.IndexOf('`') >= 0
                 || text.IndexOf('*') >= 0
-                || text.IndexOf('[') >= 0;
+                || text.IndexOf('[') >= 0
+                || text.IndexOf('!') >= 0
+                || HubMarkdownInline.ContainsEmoji(text);
         }
 
         private static float[] ComputeColumnMinWidths(List<List<string>> rows, int columnCount)
@@ -430,10 +494,15 @@ namespace TechCosmos.Hub.Editor
         private static string StripMarkdownForMeasure(string text)
         {
             if (string.IsNullOrEmpty(text)) return string.Empty;
-            text = LinkInlineRegex.Replace(text, "$1");
-            text = CodeInlineRegex.Replace(text, "$1");
-            text = BoldInlineRegex.Replace(text, "$1");
-            text = ItalicInlineRegex.Replace(text, "$1");
+
+            text = MeasureLinkedImageRegex.Replace(
+                text,
+                m => HubShieldsBadge.Format(m.Groups[2].Value, m.Groups[1].Value));
+            text = MeasureImageRegex.Replace(text, m => HubShieldsBadge.Format(m.Groups[2].Value, m.Groups[1].Value));
+            text = MeasureLinkRegex.Replace(text, "$1");
+            text = MeasureCodeRegex.Replace(text, "$1");
+            text = MeasureBoldRegex.Replace(text, "$1");
+            text = MeasureItalicRegex.Replace(text, "$1");
             return text.Trim();
         }
 
@@ -447,18 +516,18 @@ namespace TechCosmos.Hub.Editor
             return units;
         }
 
-        private static void ConfigureTableCellLabel(Label label)
+        private static void ConfigureTableCellContent(VisualElement content)
         {
-            label.style.whiteSpace = WhiteSpace.Normal;
-            label.style.overflow = Overflow.Visible;
-            label.style.width = Length.Percent(100);
-            label.style.flexGrow = 0;
-            label.style.flexShrink = 0;
-            label.style.marginTop = 0;
-            label.style.marginBottom = 0;
-            label.style.paddingTop = 0;
-            label.style.paddingBottom = 0;
-            label.style.minHeight = 0;
+            content.style.whiteSpace = WhiteSpace.Normal;
+            content.style.overflow = Overflow.Visible;
+            content.style.width = Length.Percent(100);
+            content.style.flexGrow = 0;
+            content.style.flexShrink = 0;
+            content.style.marginTop = 0;
+            content.style.marginBottom = 0;
+            content.style.paddingTop = 0;
+            content.style.paddingBottom = 0;
+            content.style.minHeight = 0;
         }
 
         private static List<string> SplitTableRow(string line)
@@ -487,6 +556,16 @@ namespace TechCosmos.Hub.Editor
             return wrap;
         }
 
+        internal static void ConfigureInlineLabel(Label label, string contextClass)
+        {
+            label.AddToClassList("hub-md-run");
+            HubMarkdownLayout.ApplyRunLabel(label);
+            HubColors.ApplyMarkdownRun(label, contextClass);
+        }
+
+        internal static void OpenReadmeLink(string url, string baseDirectory)
+            => OpenLink(url, baseDirectory);
+
         private static void ConfigureBlockLabel(Label label)
         {
             label.style.whiteSpace = WhiteSpace.Normal;
@@ -502,122 +581,6 @@ namespace TechCosmos.Hub.Editor
             ConfigureBlockLabel(label);
             HubColors.ApplyMarkdownBlock(label, className);
             return label;
-        }
-
-        private static Label MakeRichLabel(string markdown, string className, string baseDirectory)
-        {
-            var links = new Dictionary<string, string>();
-            var linkCounter = 0;
-            var richText = ToRichText(markdown, links, ref linkCounter);
-
-            var label = new Label { text = richText, enableRichText = true };
-            if (!string.IsNullOrEmpty(className)) label.AddToClassList(className);
-            ConfigureBlockLabel(label);
-            HubColors.ApplyMarkdownBlock(label, className);
-
-            if (links.Count > 0)
-            {
-#if UNITY_2022_2_OR_NEWER
-                label.RegisterCallback<PointerUpLinkTagEvent>(evt =>
-                {
-                    if (!string.IsNullOrEmpty(evt.linkID) && links.TryGetValue(evt.linkID, out var url))
-                        OpenLink(url, baseDirectory);
-                });
-#endif
-            }
-
-            return label;
-        }
-
-        private static string ToRichText(string text, Dictionary<string, string> links, ref int linkCounter)
-        {
-            if (string.IsNullOrEmpty(text)) return string.Empty;
-
-            var sb = new StringBuilder();
-            AppendRichInline(sb, text, links, ref linkCounter);
-            return sb.ToString();
-        }
-
-        private static void AppendRichInline(StringBuilder sb, string text, Dictionary<string, string> links, ref int linkCounter)
-        {
-            if (string.IsNullOrEmpty(text)) return;
-
-            var patterns = new (Regex Regex, MdInlineKind Kind)[]
-            {
-                (LinkInlineRegex, MdInlineKind.Link),
-                (CodeInlineRegex, MdInlineKind.Code),
-                (BoldInlineRegex, MdInlineKind.Bold),
-                (ItalicInlineRegex, MdInlineKind.Italic),
-            };
-
-            var bestIndex = -1;
-            var bestKind = MdInlineKind.None;
-            Match bestMatch = null;
-
-            foreach (var (regex, kind) in patterns)
-            {
-                var m = regex.Match(text);
-                if (!m.Success) continue;
-                if (bestIndex < 0 || m.Index < bestIndex)
-                {
-                    bestIndex = m.Index;
-                    bestKind = kind;
-                    bestMatch = m;
-                }
-            }
-
-            if (bestMatch == null)
-            {
-                sb.Append(EscapeRichText(text));
-                return;
-            }
-
-            if (bestIndex > 0)
-                sb.Append(EscapeRichText(text.Substring(0, bestIndex)));
-
-            switch (bestKind)
-            {
-                case MdInlineKind.Link:
-                {
-                    var label = bestMatch.Groups[1].Value;
-                    var url = bestMatch.Groups[2].Value;
-                    var linkId = $"hub-link-{linkCounter++}";
-                    links[linkId] = url;
-                    sb.Append("<color=#60A5FA><u><link=\"");
-                    sb.Append(linkId);
-                    sb.Append("\">");
-                    sb.Append(EscapeRichText(label));
-                    sb.Append("</link></u></color>");
-                    break;
-                }
-                case MdInlineKind.Code:
-                    sb.Append("<color=#E6B478><size=12>");
-                    sb.Append(EscapeRichText(bestMatch.Groups[1].Value));
-                    sb.Append("</size></color>");
-                    break;
-                case MdInlineKind.Bold:
-                    sb.Append("<b>");
-                    AppendRichInline(sb, bestMatch.Groups[1].Value, links, ref linkCounter);
-                    sb.Append("</b>");
-                    break;
-                case MdInlineKind.Italic:
-                    sb.Append("<i>");
-                    AppendRichInline(sb, bestMatch.Groups[1].Value, links, ref linkCounter);
-                    sb.Append("</i>");
-                    break;
-            }
-
-            var rest = text.Substring(bestIndex + bestMatch.Length);
-            AppendRichInline(sb, rest, links, ref linkCounter);
-        }
-
-        private static string EscapeRichText(string text)
-        {
-            if (string.IsNullOrEmpty(text)) return string.Empty;
-            return text
-                .Replace("&", "&amp;")
-                .Replace("<", "&lt;")
-                .Replace(">", "&gt;");
         }
 
         private static void OpenLink(string url, string baseDirectory)
@@ -703,13 +666,16 @@ namespace TechCosmos.Hub.Editor
             Table
         }
 
-        private enum MdInlineKind
+        private sealed class MdListItem
         {
-            None,
-            Link,
-            Code,
-            Bold,
-            Italic
+            public string Text { get; }
+            public IReadOnlyList<MdBlock> Children { get; }
+
+            public MdListItem(string text, IReadOnlyList<MdBlock> children)
+            {
+                Text = text;
+                Children = children ?? Array.Empty<MdBlock>();
+            }
         }
 
         private sealed class MdBlock
@@ -718,6 +684,7 @@ namespace TechCosmos.Hub.Editor
             public string Text { get; }
             public int Level { get; }
             public IReadOnlyList<string> Lines { get; }
+            public IReadOnlyList<MdListItem> ListItems { get; }
 
             public MdBlock(MdBlockKind kind, string text = null, int level = 0)
             {
@@ -730,6 +697,12 @@ namespace TechCosmos.Hub.Editor
             {
                 Kind = kind;
                 Lines = lines;
+            }
+
+            public MdBlock(MdBlockKind kind, List<MdListItem> items)
+            {
+                Kind = kind;
+                ListItems = items;
             }
         }
     }

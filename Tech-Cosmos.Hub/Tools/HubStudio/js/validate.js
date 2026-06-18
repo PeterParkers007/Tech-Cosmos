@@ -23,18 +23,19 @@ export function validateCatalog(catalog) {
   }
 
   const packages = catalog.packages || [];
-  const ids = new Set();
+  const allIds = new Set();
   for (const p of packages) {
-    if (p?.id?.trim()) ids.add(p.id.trim());
+    if (p?.id?.trim()) allIds.add(p.id.trim());
   }
 
+  const seen = new Set();
   for (let i = 0; i < packages.length; i++) {
     const p = packages[i];
     const label = p.displayName || p.id || `#${i + 1}`;
 
     if (!p.id?.trim()) push(issues, "error", "catalog", `${label}: 缺少 id`, p.id);
-    else if (ids.has(p.id)) push(issues, "error", "catalog", `重复的包 id: ${p.id}`, p.id);
-    else ids.add(p.id);
+    else if (seen.has(p.id)) push(issues, "error", "catalog", `重复的包 id: ${p.id}`, p.id);
+    else seen.add(p.id);
 
     if (!p.folder?.trim()) push(issues, "error", "catalog", `${label}: 缺少 folder`, p.id);
     if (!p.displayName?.trim()) push(issues, "warning", "catalog", `${p.id || label}: 缺少 displayName`, p.id);
@@ -46,7 +47,7 @@ export function validateCatalog(catalog) {
     for (const dep of p.dependsOn || []) {
       if (!dep?.trim()) push(issues, "error", "catalog", `${p.id || label}: dependsOn 含空项`, p.id);
       else if (dep === p.id) push(issues, "error", "catalog", `${p.id}: 不能依赖自身`, p.id);
-      else if (!ids.has(dep)) {
+      else if (!allIds.has(dep)) {
         push(issues, "warning", "catalog", `${p.id}: dependsOn 未在 catalog 中找到 ${dep}`, p.id);
       }
     }

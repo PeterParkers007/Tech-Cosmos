@@ -120,11 +120,12 @@ namespace TechCosmos.Hub.Editor
         {
             var sidebar = _body?.Q(className: "hub-sidebar");
             HubColors.ApplyShell(_root, _header, _tabs, _body, sidebar, _detailPanel);
-            HubColors.ApplyTab(_tabPackages, _tab == HubTab.Packages);
-            HubColors.ApplyTab(_tabGlue, _tab == HubTab.Glue);
-            HubColors.ApplyTab(_tabProjectStructure, _tab == HubTab.ProjectStructure);
+            HubColors.RefreshTab(_tabPackages, _tab == HubTab.Packages);
+            HubColors.RefreshTab(_tabGlue, _tab == HubTab.Glue);
+            HubColors.RefreshTab(_tabProjectStructure, _tab == HubTab.ProjectStructure);
             if (_searchField != null)
                 HubColors.ApplySearchField(_searchField);
+            EnsureInteractionFeedback();
         }
 
         private void OnEditorUpdate()
@@ -169,6 +170,12 @@ namespace TechCosmos.Hub.Editor
             RefreshSidebar();
             RefreshDetail();
             ApplyVisualTheme();
+        }
+
+        private void EnsureInteractionFeedback()
+        {
+            if (_root == null) return;
+            HubUiFactory.ApplyInteractionFeedback(_root);
         }
 
         private void OnRootGeometryChanged(GeometryChangedEvent evt)
@@ -301,9 +308,9 @@ namespace TechCosmos.Hub.Editor
             _tabs.Add(_tabGlue);
             _tabs.Add(_tabProjectStructure);
             HubShellLayout.ApplyTabs(_tabs);
-            HubColors.ApplyTab(_tabPackages, _tab == HubTab.Packages);
-            HubColors.ApplyTab(_tabGlue, _tab == HubTab.Glue);
-            HubColors.ApplyTab(_tabProjectStructure, _tab == HubTab.ProjectStructure);
+            HubColors.RefreshTab(_tabPackages, _tab == HubTab.Packages);
+            HubColors.RefreshTab(_tabGlue, _tab == HubTab.Glue);
+            HubColors.RefreshTab(_tabProjectStructure, _tab == HubTab.ProjectStructure);
             _root.Add(_tabs);
         }
 
@@ -313,9 +320,9 @@ namespace TechCosmos.Hub.Editor
             _tabPackages.EnableInClassList("hub-tab--active", tab == HubTab.Packages);
             _tabGlue.EnableInClassList("hub-tab--active", tab == HubTab.Glue);
             _tabProjectStructure.EnableInClassList("hub-tab--active", tab == HubTab.ProjectStructure);
-            HubColors.ApplyTab(_tabPackages, tab == HubTab.Packages);
-            HubColors.ApplyTab(_tabGlue, tab == HubTab.Glue);
-            HubColors.ApplyTab(_tabProjectStructure, tab == HubTab.ProjectStructure);
+            HubColors.RefreshTab(_tabPackages, tab == HubTab.Packages);
+            HubColors.RefreshTab(_tabGlue, tab == HubTab.Glue);
+            HubColors.RefreshTab(_tabProjectStructure, tab == HubTab.ProjectStructure);
 
             if (_searchField != null)
                 _searchField.style.display = tab == HubTab.Packages ? DisplayStyle.Flex : DisplayStyle.None;
@@ -407,6 +414,8 @@ namespace TechCosmos.Hub.Editor
                 BuildGlueSidebar();
             else
                 BuildProjectStructureSidebar();
+
+            EnsureInteractionFeedback();
         }
 
         private void BuildPackageSidebar()
@@ -435,7 +444,7 @@ namespace TechCosmos.Hub.Editor
                     var item = new VisualElement();
                     item.AddToClassList("hub-list-item");
                     HubShellLayout.ApplyListItem(item);
-                    HubColors.ApplyListItem(item, pkg.id == _selectedPackageId);
+                    HubColors.RefreshListItem(item, pkg.id == _selectedPackageId);
                     if (pkg.id == _selectedPackageId)
                         item.AddToClassList("hub-list-item--selected");
                     if (_selectedPackageIds.Contains(pkg.id))
@@ -443,6 +452,7 @@ namespace TechCosmos.Hub.Editor
 
                     var check = new Toggle { value = _selectedPackageIds.Contains(pkg.id) };
                     check.AddToClassList("hub-list-check");
+                    HubColors.RefreshToggle(check);
                     var capturedPkg = pkg;
                     check.RegisterValueChangedCallback(evt =>
                     {
@@ -520,7 +530,7 @@ namespace TechCosmos.Hub.Editor
             var label = HubSettings.ImportMode == HubImportMode.AssetsEmbed ? "嵌入选中" : "导入选中";
             _batchImportBtn.text = $"{label} ({_selectedPackageIds.Count})";
             _batchImportBtn.SetEnabled(_selectedPackageIds.Count > 0);
-            HubColors.RefreshButton(_batchImportBtn, "hub-btn hub-btn--accent");
+            HubColors.RefreshButton(_batchImportBtn, HubUiFactory.JoinClasses(_batchImportBtn));
         }
 
         private void ImportSelectedPackages()
@@ -623,6 +633,8 @@ namespace TechCosmos.Hub.Editor
                 BuildGlueDetail();
             else
                 BuildProjectStructureDetail();
+
+            EnsureInteractionFeedback();
         }
 
         private void BuildPackageDetail()
@@ -668,7 +680,7 @@ namespace TechCosmos.Hub.Editor
 
             var importBtn = HubUiFactory.Button(importLabel, "hub-btn hub-btn--primary", () => ImportPackage(pkg));
             importBtn.SetEnabled(importPlan.CanImport);
-            HubColors.RefreshButton(importBtn, "hub-btn hub-btn--primary");
+            HubColors.RefreshButton(importBtn, HubUiFactory.JoinClasses(importBtn));
             importBtn.tooltip = importPlan.CanImport
                 ? (importPlan.PendingDependencyCount > 0
                     ? "将自动先导入未安装的依赖包"
@@ -679,7 +691,7 @@ namespace TechCosmos.Hub.Editor
             var updateLabel = isAssetsMode ? "重新同步" : "更新";
             var updateBtn = HubUiFactory.Button(updateLabel, "hub-btn hub-btn--accent", () => UpdatePackage(pkg));
             updateBtn.SetEnabled(PackageDetector.CanUpdate(pkg, _catalog));
-            HubColors.RefreshButton(updateBtn, "hub-btn hub-btn--accent");
+            HubColors.RefreshButton(updateBtn, HubUiFactory.JoinClasses(updateBtn));
             btnRow.Add(updateBtn);
 
             var removeLabel = isAssetsMode ? "从 Assets 移除" : "从 Manifest 移除";
@@ -698,17 +710,18 @@ namespace TechCosmos.Hub.Editor
             removeBtn.SetEnabled(isAssetsMode
                 ? presence == PackagePresence.AssetsEmbedded
                 : presence == PackagePresence.InManifest);
-            HubColors.RefreshButton(removeBtn, "hub-btn hub-btn--danger");
+            HubColors.RefreshButton(removeBtn, HubUiFactory.JoinClasses(removeBtn));
             btnRow.Add(removeBtn);
 
             if (isAssetsMode)
             {
-                btnRow.Add(HubUiFactory.Button("在 Project 中定位", "hub-btn hub-btn--ghost", () =>
+                var locateBtn = HubUiFactory.Button("在 Project 中定位", "hub-btn hub-btn--ghost", () =>
                 {
                     var folder = $"{HubSettings.AssetsPackageRoot}/{pkg.folder}";
                     var obj = AssetDatabase.LoadAssetAtPath<Object>(folder);
                     if (obj != null) EditorGUIUtility.PingObject(obj);
-                }));
+                });
+                btnRow.Add(locateBtn);
             }
 
             var readmePath = PackageReadmeLoader.GetReadmeAssetPath(pkg, _catalog);
@@ -731,7 +744,7 @@ namespace TechCosmos.Hub.Editor
             });
             openBtn.SetEnabled(!string.IsNullOrEmpty(readmePath)
                 || (!string.IsNullOrEmpty(readmeFullPath) && File.Exists(readmeFullPath)));
-            HubColors.RefreshButton(openBtn, "hub-btn hub-btn--ghost");
+            HubColors.RefreshButton(openBtn, HubUiFactory.JoinClasses(openBtn));
             btnRow.Add(openBtn);
 
             HubShellLayout.ApplyBtnRow(btnRow);
@@ -790,7 +803,7 @@ namespace TechCosmos.Hub.Editor
                 catch (System.Exception ex) { Debug.LogError($"[Hub] {ex.Message}"); }
             });
             genBtn.SetEnabled(status.CanGenerate);
-            HubColors.RefreshButton(genBtn, "hub-btn hub-btn--primary");
+            HubColors.RefreshButton(genBtn, HubUiFactory.JoinClasses(genBtn));
             btnRow.Add(genBtn);
             HubShellLayout.ApplyBtnRow(btnRow);
             header.Add(btnRow);

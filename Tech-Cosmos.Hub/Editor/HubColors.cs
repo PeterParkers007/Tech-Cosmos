@@ -151,6 +151,11 @@ namespace TechCosmos.Hub.Editor
             tab.style.color = active ? TabActive : TabIdle;
             tab.style.fontSize = 12;
             tab.style.unityFontStyleAndWeight = active ? FontStyle.Bold : FontStyle.Normal;
+        }
+
+        public static void RefreshTab(Button tab, bool active)
+        {
+            ApplyTab(tab, active);
             HubHoverEffects.BindTab(tab);
         }
 
@@ -158,6 +163,36 @@ namespace TechCosmos.Hub.Editor
         {
             ApplyButton(button, classNames);
             HubHoverEffects.BindButton(button, classNames);
+        }
+
+        public static void RefreshModeToggle(Button button, bool active)
+        {
+            ApplyModeToggle(button, active);
+            HubHoverEffects.BindModeToggle(button);
+        }
+
+        public static void RefreshDepLinkButton(Button button)
+        {
+            ApplyDepLinkButton(button);
+            HubHoverEffects.BindDepLink(button);
+        }
+
+        public static void RefreshListItem(VisualElement item, bool selected)
+        {
+            ApplyListItem(item, selected);
+            HubHoverEffects.BindListItem(item);
+        }
+
+        public static void RefreshToggle(Toggle toggle)
+        {
+            ApplyToggle(toggle);
+            HubHoverEffects.BindToggle(toggle);
+        }
+
+        public static void RefreshMarkdownLink(Label label)
+        {
+            ApplyMarkdownLink(label);
+            HubHoverEffects.BindMarkdownLink(label);
         }
 
         public static void ApplyButton(Button button, string classNames)
@@ -287,7 +322,6 @@ namespace TechCosmos.Hub.Editor
             item.style.borderLeftWidth = 3;
             item.style.backgroundColor = selected ? SelectedBg : new Color(0, 0, 0, 0);
             item.style.borderLeftColor = selected ? SelectedBorder : new Color(0, 0, 0, 0);
-            HubHoverEffects.BindListItem(item);
         }
 
         public static void ApplyCategoryLabel(Label label)
@@ -328,37 +362,220 @@ namespace TechCosmos.Hub.Editor
                 element.style.paddingRight = 14;
                 element.style.marginTop = 8;
                 element.style.marginBottom = 12;
+                return;
             }
-            else if (className.Contains("hub-md-code"))
+
+            if (element is not Label label) return;
+
+            label.style.whiteSpace = WhiteSpace.Normal;
+            label.style.overflow = Overflow.Visible;
+
+            if (className.Contains("hub-md-code"))
             {
-                if (element is Label code)
-                {
-                    code.style.fontSize = 12;
-                    code.style.color = CodeText;
-                    code.style.whiteSpace = WhiteSpace.Normal;
-                }
+                label.style.fontSize = 12;
+                label.style.color = CodeText;
+                return;
             }
-            else if (className.Contains("hub-md-h1") || className.Contains("hub-md-h2") || className.Contains("hub-md-h3"))
+
+            if (className.Contains("hub-md-h1"))
             {
-                if (element is Label h)
-                {
-                    h.style.unityFontStyleAndWeight = FontStyle.Bold;
-                    h.style.color = Rgb(220, 228, 245);
-                    h.style.marginTop = 12;
-                    h.style.marginBottom = 6;
-                    h.style.whiteSpace = WhiteSpace.Normal;
-                }
+                label.style.fontSize = 24;
+                label.style.color = Rgb(240, 244, 252);
+                label.style.unityFontStyleAndWeight = FontStyle.Bold;
+                label.style.marginTop = 4;
+                label.style.marginBottom = 12;
+                return;
             }
-            else if (className.Contains("hub-md-p") || className.Contains("hub-md-li-text"))
+
+            if (className.Contains("hub-md-h2"))
             {
-                if (element is Label p)
-                {
-                    p.style.fontSize = 13;
-                    p.style.color = Rgb(200, 206, 220);
-                    p.style.whiteSpace = WhiteSpace.Normal;
-                    p.style.marginBottom = 6;
-                }
+                label.style.fontSize = 19;
+                label.style.color = Rgb(236, 240, 248);
+                label.style.unityFontStyleAndWeight = FontStyle.Bold;
+                label.style.marginTop = 20;
+                label.style.marginBottom = 10;
+                return;
             }
+
+            if (className.Contains("hub-md-h3"))
+            {
+                label.style.fontSize = 16;
+                label.style.color = Rgb(228, 232, 240);
+                label.style.unityFontStyleAndWeight = FontStyle.Bold;
+                label.style.marginTop = 16;
+                label.style.marginBottom = 8;
+                return;
+            }
+
+            if (className.Contains("hub-md-h4"))
+            {
+                label.style.fontSize = 14;
+                label.style.color = Rgb(220, 226, 236);
+                label.style.unityFontStyleAndWeight = FontStyle.Bold;
+                return;
+            }
+
+            if (className.Contains("hub-md-h5"))
+            {
+                label.style.fontSize = 13;
+                label.style.color = Rgb(210, 216, 228);
+                label.style.unityFontStyleAndWeight = FontStyle.Bold;
+                return;
+            }
+
+            if (className.Contains("hub-md-h6"))
+            {
+                label.style.fontSize = 12;
+                label.style.color = Rgb(170, 178, 195);
+                label.style.unityFontStyleAndWeight = FontStyle.Bold;
+                return;
+            }
+
+            if (className.Contains("hub-md-code-inline"))
+            {
+                label.style.fontSize = 12;
+                label.style.color = Rgb(230, 180, 120);
+                label.style.backgroundColor = CodeBg;
+                label.style.borderTopLeftRadius = label.style.borderTopRightRadius =
+                    label.style.borderBottomLeftRadius = label.style.borderBottomRightRadius = 4;
+                label.style.paddingLeft = 4;
+                label.style.paddingRight = 4;
+                return;
+            }
+
+            if (className.Contains("hub-md-link-text"))
+            {
+                label.style.color = Rgb(120, 170, 255);
+                label.style.fontSize = 13;
+                return;
+            }
+
+            if (className.Contains("hub-md-empty") || className.Contains("hub-md-truncate"))
+            {
+                label.style.fontSize = 12;
+                label.style.color = Muted;
+                label.style.unityFontStyleAndWeight = FontStyle.Italic;
+                return;
+            }
+
+            if (className.Contains("hub-md-cell"))
+            {
+                label.style.fontSize = 12;
+                label.style.color = Rgb(190, 198, 212);
+                return;
+            }
+
+            if (className.Contains("hub-md-cell--head"))
+            {
+                label.style.unityFontStyleAndWeight = FontStyle.Bold;
+                label.style.color = Rgb(220, 228, 240);
+                return;
+            }
+
+            if (className.Contains("hub-md-quote-line")
+                || className.Contains("hub-md-p")
+                || className.Contains("hub-md-li-text")
+                || className.Contains("hub-md-emoji")
+                || className.Contains("hub-md-symbol"))
+            {
+                label.style.fontSize = 13;
+                label.style.color = Rgb(198, 204, 218);
+                label.style.marginBottom = 6;
+            }
+
+            if (className.Contains("hub-md-li-marker"))
+            {
+                label.style.fontSize = 13;
+                label.style.color = Rgb(120, 140, 180);
+                label.style.unityFontStyleAndWeight = FontStyle.Bold;
+                label.style.marginBottom = 0;
+            }
+        }
+
+        public static void ApplyMarkdownRun(Label label, string contextClass)
+        {
+            if (label == null || string.IsNullOrEmpty(contextClass)) return;
+
+            label.style.marginTop = 0;
+            label.style.marginBottom = 0;
+
+            if (contextClass.Contains("hub-md-h1"))
+            {
+                label.style.fontSize = 24;
+                label.style.color = Rgb(240, 244, 252);
+                return;
+            }
+
+            if (contextClass.Contains("hub-md-h2"))
+            {
+                label.style.fontSize = 19;
+                label.style.color = Rgb(236, 240, 248);
+                return;
+            }
+
+            if (contextClass.Contains("hub-md-h3"))
+            {
+                label.style.fontSize = 16;
+                label.style.color = Rgb(228, 232, 240);
+                return;
+            }
+
+            if (contextClass.Contains("hub-md-h4"))
+            {
+                label.style.fontSize = 14;
+                label.style.color = Rgb(220, 226, 236);
+                return;
+            }
+
+            if (contextClass.Contains("hub-md-h5"))
+            {
+                label.style.fontSize = 13;
+                label.style.color = Rgb(210, 216, 228);
+                return;
+            }
+
+            if (contextClass.Contains("hub-md-h6"))
+            {
+                label.style.fontSize = 12;
+                label.style.color = Rgb(170, 178, 195);
+                return;
+            }
+
+            if (contextClass.Contains("hub-md-quote-line"))
+            {
+                label.style.fontSize = 13;
+                label.style.color = Rgb(170, 180, 200);
+                return;
+            }
+
+            if (contextClass.Contains("hub-md-cell"))
+            {
+                label.style.fontSize = 12;
+                label.style.color = Rgb(190, 198, 212);
+                return;
+            }
+
+            label.style.fontSize = 13;
+            label.style.color = Rgb(198, 204, 218);
+        }
+
+        public static void ApplyMarkdownSymbol(Label label, string styleClass)
+        {
+            if (label == null) return;
+
+            label.style.unityFontStyleAndWeight = FontStyle.Bold;
+            label.style.marginRight = 2;
+
+            if (styleClass != null && styleClass.Contains("hub-md-symbol--ok"))
+                label.style.color = Rgb(62, 207, 142);
+            else if (styleClass != null && styleClass.Contains("hub-md-symbol--fail"))
+                label.style.color = Rgb(220, 90, 90);
+            else if (styleClass != null && styleClass.Contains("hub-md-symbol--warn"))
+                label.style.color = Rgb(230, 180, 80);
+            else if (styleClass != null && styleClass.Contains("hub-md-symbol--star"))
+                label.style.color = Rgb(230, 200, 90);
+            else
+                label.style.color = Rgb(198, 204, 218);
         }
 
         public static void ApplySearchField(VisualElement field)
@@ -416,7 +633,6 @@ namespace TechCosmos.Hub.Editor
             button.style.backgroundColor = active ? TabBg : new Color(0, 0, 0, 0);
             button.style.color = active ? TabActive : TabIdle;
             button.style.unityFontStyleAndWeight = active ? FontStyle.Bold : FontStyle.Normal;
-            HubHoverEffects.BindModeToggle(button);
         }
 
         public static void ApplyBadge(Label badge, string classNames)
@@ -470,7 +686,6 @@ namespace TechCosmos.Hub.Editor
             button.style.height = 22;
             button.style.paddingLeft = 0;
             button.style.paddingRight = 8;
-            HubHoverEffects.BindDepLink(button);
         }
 
         public static void ApplyChip(Label label, bool category = false)
@@ -563,6 +778,21 @@ namespace TechCosmos.Hub.Editor
             toggle.style.color = BodyText;
             toggle.style.marginTop = 4;
             toggle.style.marginBottom = 4;
+            toggle.style.borderTopLeftRadius = toggle.style.borderTopRightRadius =
+                toggle.style.borderBottomLeftRadius = toggle.style.borderBottomRightRadius = 6;
+            toggle.style.paddingLeft = 4;
+            toggle.style.paddingRight = 4;
+        }
+
+        public static void ApplyMarkdownLink(Label label)
+        {
+            if (label == null) return;
+            label.style.color = Rgb(120, 170, 255);
+            label.style.unityFontStyleAndWeight = FontStyle.Normal;
+            label.style.borderTopLeftRadius = label.style.borderTopRightRadius =
+                label.style.borderBottomLeftRadius = label.style.borderBottomRightRadius = 4;
+            label.style.paddingLeft = 2;
+            label.style.paddingRight = 2;
         }
 
         public static void ApplyWarningBox(VisualElement box)

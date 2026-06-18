@@ -55,9 +55,84 @@ namespace TechCosmos.Hub.Editor
         public static Button Button(string text, string className, System.Action onClick)
         {
             var b = new Button(onClick) { text = text };
-            if (!string.IsNullOrEmpty(className)) b.AddToClassList(className);
-            if (className != null && className.Contains("hub-btn"))
-                HubColors.RefreshButton(b, className);
+            if (!string.IsNullOrEmpty(className))
+            {
+                foreach (var part in className.Split(' '))
+                {
+                    if (!string.IsNullOrEmpty(part))
+                        b.AddToClassList(part);
+                }
+            }
+
+            StyleButton(b, className);
+            return b;
+        }
+
+        /// <summary>
+        /// 统一为 Hub 内所有 Button 绑定样式与 hover/press 反馈。
+        /// </summary>
+        public static void StyleButton(Button button, string className = null, bool? tabActive = null)
+        {
+            if (button == null) return;
+
+            className ??= JoinClasses(button);
+            if (string.IsNullOrEmpty(className)) return;
+
+            if (button.ClassListContains("hub-btn"))
+            {
+                HubColors.RefreshButton(button, className);
+                return;
+            }
+
+            if (button.ClassListContains("hub-dep-name"))
+            {
+                HubColors.RefreshDepLinkButton(button);
+                return;
+            }
+
+            if (button.ClassListContains("hub-mode-toggle") || button.ClassListContains("hub-import-mode-toggle"))
+            {
+                var active = tabActive ?? button.ClassListContains("hub-tab--active");
+                HubColors.RefreshModeToggle(button, active);
+                return;
+            }
+
+            if (button.ClassListContains("hub-tab"))
+            {
+                var active = tabActive ?? button.ClassListContains("hub-tab--active");
+                HubColors.RefreshTab(button, active);
+            }
+        }
+
+        /// <summary>
+        /// 扫描子树，为所有可点击控件补全 hover/press 绑定（防止遗漏）。
+        /// </summary>
+        public static void ApplyInteractionFeedback(VisualElement root)
+        {
+            if (root == null) return;
+
+            root.Query<Button>().ForEach(b => StyleButton(b));
+            root.Query<Toggle>().ForEach(t => HubColors.RefreshToggle(t));
+            root.Query(className: "hub-list-item").ForEach(item =>
+                HubColors.RefreshListItem(item, item.ClassListContains("hub-list-item--selected")));
+            root.Query(className: "hub-md-link").ForEach(label =>
+            {
+                if (label is Label linkLabel)
+                    HubColors.RefreshMarkdownLink(linkLabel);
+            });
+        }
+
+        public static string JoinClasses(VisualElement element)
+        {
+            if (element == null) return string.Empty;
+            return string.Join(" ", element.GetClasses());
+        }
+
+        private static Button ModeToggleButton(string text, string elementName, System.Action onClick)
+        {
+            var b = new Button(onClick) { text = text, name = elementName };
+            b.AddToClassList("hub-tab");
+            b.AddToClassList("hub-mode-toggle");
             return b;
         }
 
@@ -87,7 +162,6 @@ namespace TechCosmos.Hub.Editor
                 onSelectPackageId?.Invoke(link.PackageId);
             });
             nameBtn.tooltip = link.PackageId;
-            HubColors.ApplyDepLinkButton(nameBtn);
             row.Add(nameBtn);
 
             var badgeClass = link.State switch
@@ -202,23 +276,21 @@ namespace TechCosmos.Hub.Editor
             btnRow.AddToClassList("hub-import-mode-row");
             HubShellLayout.ApplyImportModeRow(btnRow);
 
-            var gitBtn = Button("Git UPM", "hub-tab", () =>
+            var gitBtn = ModeToggleButton("Git UPM", "hub-mode-git", () =>
             {
                 if (HubSettings.ImportMode == HubImportMode.GitUpm) return;
                 HubSettings.ImportMode = HubImportMode.GitUpm;
                 UpdateImportModeButtons(btnRow);
                 refresh?.Invoke();
             });
-            gitBtn.name = "hub-mode-git";
 
-            var assetsBtn = Button("Assets 嵌入", "hub-tab", () =>
+            var assetsBtn = ModeToggleButton("Assets 嵌入", "hub-mode-assets", () =>
             {
                 if (HubSettings.ImportMode == HubImportMode.AssetsEmbed) return;
                 HubSettings.ImportMode = HubImportMode.AssetsEmbed;
                 UpdateImportModeButtons(btnRow);
                 refresh?.Invoke();
             });
-            assetsBtn.name = "hub-mode-assets";
 
             btnRow.Add(gitBtn);
             btnRow.Add(assetsBtn);
@@ -243,12 +315,12 @@ namespace TechCosmos.Hub.Editor
             if (git != null)
             {
                 git.EnableInClassList("hub-tab--active", HubSettings.ImportMode == HubImportMode.GitUpm);
-                HubColors.ApplyModeToggle(git, HubSettings.ImportMode == HubImportMode.GitUpm);
+                HubColors.RefreshModeToggle(git, HubSettings.ImportMode == HubImportMode.GitUpm);
             }
             if (assets != null)
             {
                 assets.EnableInClassList("hub-tab--active", HubSettings.ImportMode == HubImportMode.AssetsEmbed);
-                HubColors.ApplyModeToggle(assets, HubSettings.ImportMode == HubImportMode.AssetsEmbed);
+                HubColors.RefreshModeToggle(assets, HubSettings.ImportMode == HubImportMode.AssetsEmbed);
             }
         }
 
@@ -260,8 +332,8 @@ namespace TechCosmos.Hub.Editor
 
             var toggle = new Toggle(label) { value = value };
             toggle.AddToClassList("hub-toggle");
-            HubColors.ApplyToggle(toggle);
             toggle.RegisterValueChangedCallback(evt => onChanged?.Invoke(evt.newValue));
+            HubColors.RefreshToggle(toggle);
             row.Add(toggle);
             return row;
         }
@@ -281,7 +353,7 @@ namespace TechCosmos.Hub.Editor
             item.AddToClassList("hub-list-item");
             if (selected) item.AddToClassList("hub-list-item--selected");
             HubShellLayout.ApplyListItem(item);
-            HubColors.ApplyListItem(item, selected);
+            HubColors.RefreshListItem(item, selected);
             buildContent?.Invoke(item);
             return item;
         }
