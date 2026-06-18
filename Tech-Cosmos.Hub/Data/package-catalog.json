@@ -20,7 +20,8 @@
       "folder": "Tech-Cosmos.Framework.TargetingSystem",
       "displayName": "Targeting System",
       "category": "Framework",
-      "description": "TargetRequest → TargetResult 选目标（解耦层）"
+      "description": "TargetRequest → TargetResult 选目标（解耦层）",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.TargetingSystem.git"
     },
     {
       "id": "com.techcosmos.eventbus",
