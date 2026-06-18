@@ -238,6 +238,7 @@ namespace TechCosmos.Hub.Editor
         {
             var pre = new VisualElement();
             pre.AddToClassList("hub-md-pre");
+            HubColors.ApplyMarkdownBlock(pre, "hub-md-pre");
             pre.Add(MakePlainLabel(string.Join("\n", lines), "hub-md-code"));
             return pre;
         }
@@ -499,6 +500,7 @@ namespace TechCosmos.Hub.Editor
             var label = new Label(text) { text = text, enableRichText = false };
             if (!string.IsNullOrEmpty(className)) label.AddToClassList(className);
             ConfigureBlockLabel(label);
+            HubColors.ApplyMarkdownBlock(label, className);
             return label;
         }
 
@@ -511,6 +513,7 @@ namespace TechCosmos.Hub.Editor
             var label = new Label { text = richText, enableRichText = true };
             if (!string.IsNullOrEmpty(className)) label.AddToClassList(className);
             ConfigureBlockLabel(label);
+            HubColors.ApplyMarkdownBlock(label, className);
 
             if (links.Count > 0)
             {

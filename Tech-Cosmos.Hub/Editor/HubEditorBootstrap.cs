@@ -20,11 +20,13 @@ namespace TechCosmos.Hub.Editor
         [MenuItem("Tech-Cosmos/诊断 Hub 安装", false, 100)]
         private static void Diagnose()
         {
+            var sheet = HubTheme.Load();
             var msg =
                 "Hub Editor 程序集已加载。\n\n" +
                 $"Unity: {Application.unityVersion}\n" +
                 $"Hub 路径: {HubPaths.HubRoot}\n" +
-                $"Catalog: {(System.IO.File.Exists(HubPaths.CatalogJson) ? "OK" : "缺失")}\n\n" +
+                $"Catalog: {(System.IO.File.Exists(HubPaths.CatalogJson) ? "OK" : "缺失")}\n" +
+                $"TechCosmosHub.uss: {(sheet != null ? "OK" : "未加载（已启用 C# 主题保底）")}\n\n" +
                 "若仍看不到 Tech-Cosmos 菜单，请查看 Console 红色编译错误。";
 
             EditorUtility.DisplayDialog("Tech-Cosmos Hub", msg, "确定");

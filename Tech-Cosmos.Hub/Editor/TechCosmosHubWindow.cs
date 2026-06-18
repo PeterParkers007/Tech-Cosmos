@@ -38,31 +38,41 @@ namespace TechCosmos.Hub.Editor
         private Button _tabProjectStructure;
         private ToolbarSearchField _searchField;
         private Button _batchImportBtn;
+        private VisualElement _tabs;
         private StyleSheet _hubStylesheet;
 
         [MenuItem("Tech-Cosmos/Hub", false, 0)]
         public static void Open()
         {
             var w = GetWindow<TechCosmosHubWindow>("Tech-Cosmos Hub");
-            w.minSize = new Vector2(640, 420);
+            w.minSize = new Vector2(880, 520);
             w.Show();
         }
 
         private void CreateGUI()
         {
-            LoadStylesheet();
-
             rootVisualElement.style.flexGrow = 1;
             rootVisualElement.style.flexDirection = FlexDirection.Column;
 
-            _root = new VisualElement();
-            _root.AddToClassList("hub-root");
-            _root.style.flexGrow = 1;
-            rootVisualElement.Add(_root);
+            if (!HubTheme.TryCloneShell(rootVisualElement, out _root))
+            {
+                _root = new VisualElement();
+                _root.AddToClassList("hub-root");
+                _root.style.flexGrow = 1;
+                rootVisualElement.Add(_root);
+            }
+            else
+            {
+                _root.style.flexGrow = 1;
+            }
 
             BuildHeader();
             BuildTabs();
             BuildBody();
+
+            HubShellLayout.ApplyRoot(_root);
+            LoadStylesheet(forceReload: true);
+            ApplyVisualTheme();
 
             _root.RegisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
 
@@ -96,11 +106,25 @@ namespace TechCosmos.Hub.Editor
             if (!HubTheme.Attach(rootVisualElement, ref _hubStylesheet, forceReload))
             {
                 var paths = string.Join("\n  ", HubTheme.EnumerateStylesheetAssetPaths());
-                Debug.LogWarning(
-                    "[Tech-Cosmos Hub] 未能加载 TechCosmosHub.uss，界面样式将不完整。\n" +
-                    $"尝试路径:\n  {paths}\n" +
-                    "请关闭 Hub 后重新打开；若仍失败，在 Package Manager 中 Remove 再 Add Hub 包。");
+                Debug.LogError(
+                    "[Tech-Cosmos Hub] TechCosmosHub.uss 未加载，主题样式缺失（布局已由 HubShellLayout 保底）。\n" +
+                    $"尝试路径:\n  {paths}");
+                return;
             }
+
+            if (_root != null && _hubStylesheet != null && !_root.styleSheets.Contains(_hubStylesheet))
+                _root.styleSheets.Add(_hubStylesheet);
+        }
+
+        private void ApplyVisualTheme()
+        {
+            var sidebar = _body?.Q(className: "hub-sidebar");
+            HubColors.ApplyShell(_root, _header, _tabs, _body, sidebar, _detailPanel);
+            HubColors.ApplyTab(_tabPackages, _tab == HubTab.Packages);
+            HubColors.ApplyTab(_tabGlue, _tab == HubTab.Glue);
+            HubColors.ApplyTab(_tabProjectStructure, _tab == HubTab.ProjectStructure);
+            if (_searchField != null)
+                HubColors.ApplySearchField(_searchField);
         }
 
         private void OnEditorUpdate()
@@ -144,6 +168,7 @@ namespace TechCosmos.Hub.Editor
             RefreshStats();
             RefreshSidebar();
             RefreshDetail();
+            ApplyVisualTheme();
         }
 
         private void OnRootGeometryChanged(GeometryChangedEvent evt)
@@ -153,6 +178,7 @@ namespace TechCosmos.Hub.Editor
             _body.EnableInClassList("hub-body--narrow", w < 760);
             _header.EnableInClassList("hub-header--compact", w < 920);
             _header.EnableInClassList("hub-header--stacked", w < 640);
+            _body.style.flexDirection = w < 760 ? FlexDirection.Column : FlexDirection.Row;
         }
 
         private sealed class DetailShell
@@ -182,12 +208,14 @@ namespace TechCosmos.Hub.Editor
             shell.Scroll.contentContainer.style.alignItems = Align.Stretch;
             shell.Scroll.contentContainer.Add(shell.ScrollContent);
             _detailPanel.Add(shell.Scroll);
+            HubShellLayout.ApplyDetailShell(shell.Top, shell.Scroll, shell.ScrollContent);
 
             if (withBottom)
             {
                 shell.Bottom = new VisualElement();
                 shell.Bottom.AddToClassList("hub-detail-bottom");
                 _detailPanel.Add(shell.Bottom);
+                HubShellLayout.ApplyDetailBottom(shell.Bottom);
             }
 
             return shell;
@@ -199,6 +227,7 @@ namespace TechCosmos.Hub.Editor
             card.AddToClassList("hub-readme-card");
             card.style.flexShrink = 0;
             card.style.flexDirection = FlexDirection.Column;
+            HubColors.ApplyReadmeCard(card);
             card.Add(HubMarkdownRenderer.Render(markdown, baseDirectory));
             scrollContent.Add(card);
         }
@@ -240,6 +269,9 @@ namespace TechCosmos.Hub.Editor
             }));
             _header.Add(actions);
 
+            HubShellLayout.ApplyHeader(_header);
+            HubShellLayout.ApplyStats(stats);
+            HubShellLayout.ApplyHeaderActions(actions);
             _root.Add(_header);
         }
 
@@ -248,25 +280,31 @@ namespace TechCosmos.Hub.Editor
             var chip = new VisualElement();
             chip.AddToClassList("hub-stat-chip");
             var val = HubUiFactory.Label(value, "hub-stat-value");
+            var cap = HubUiFactory.Label(label, "hub-stat-label");
             chip.Add(val);
-            chip.Add(HubUiFactory.Label(label, "hub-stat-label"));
+            chip.Add(cap);
+            HubColors.ApplyStatChip(chip, val, cap);
             parent.Add(chip);
             return val;
         }
 
         private void BuildTabs()
         {
-            var tabs = new VisualElement();
-            tabs.AddToClassList("hub-tabs");
+            _tabs = new VisualElement();
+            _tabs.AddToClassList("hub-tabs");
 
             _tabPackages = HubUiFactory.Button("技术框架", "hub-tab hub-tab--active", () => SetTab(HubTab.Packages));
             _tabGlue = HubUiFactory.Button("胶水生成", "hub-tab", () => SetTab(HubTab.Glue));
             _tabProjectStructure = HubUiFactory.Button("项目结构", "hub-tab", () => SetTab(HubTab.ProjectStructure));
 
-            tabs.Add(_tabPackages);
-            tabs.Add(_tabGlue);
-            tabs.Add(_tabProjectStructure);
-            _root.Add(tabs);
+            _tabs.Add(_tabPackages);
+            _tabs.Add(_tabGlue);
+            _tabs.Add(_tabProjectStructure);
+            HubShellLayout.ApplyTabs(_tabs);
+            HubColors.ApplyTab(_tabPackages, _tab == HubTab.Packages);
+            HubColors.ApplyTab(_tabGlue, _tab == HubTab.Glue);
+            HubColors.ApplyTab(_tabProjectStructure, _tab == HubTab.ProjectStructure);
+            _root.Add(_tabs);
         }
 
         private void SetTab(HubTab tab)
@@ -275,6 +313,9 @@ namespace TechCosmos.Hub.Editor
             _tabPackages.EnableInClassList("hub-tab--active", tab == HubTab.Packages);
             _tabGlue.EnableInClassList("hub-tab--active", tab == HubTab.Glue);
             _tabProjectStructure.EnableInClassList("hub-tab--active", tab == HubTab.ProjectStructure);
+            HubColors.ApplyTab(_tabPackages, tab == HubTab.Packages);
+            HubColors.ApplyTab(_tabGlue, tab == HubTab.Glue);
+            HubColors.ApplyTab(_tabProjectStructure, tab == HubTab.ProjectStructure);
 
             if (_searchField != null)
                 _searchField.style.display = tab == HubTab.Packages ? DisplayStyle.Flex : DisplayStyle.None;
@@ -306,16 +347,19 @@ namespace TechCosmos.Hub.Editor
             });
             searchWrap.Add(_searchField);
             sidebar.Add(searchWrap);
+            HubShellLayout.ApplySidebarSearchWrap(searchWrap);
 
             var sidebarScroll = new ScrollView(ScrollViewMode.Vertical);
             sidebarScroll.AddToClassList("hub-sidebar-scroll");
             _sidebarList = new VisualElement();
             sidebarScroll.Add(_sidebarList);
             sidebar.Add(sidebarScroll);
+            HubShellLayout.ApplySidebarScroll(sidebarScroll);
 
             var sidebarFooter = new VisualElement();
             sidebarFooter.AddToClassList("hub-sidebar-footer");
             sidebar.Add(sidebarFooter);
+            HubShellLayout.ApplySidebarFooter(sidebarFooter);
             _sidebarFooter = sidebarFooter;
 
             _detailPanel = new VisualElement();
@@ -323,6 +367,10 @@ namespace TechCosmos.Hub.Editor
 
             _body.Add(sidebar);
             _body.Add(_detailPanel);
+
+            HubShellLayout.ApplyBody(_body);
+            HubShellLayout.ApplySidebar(sidebar);
+            HubShellLayout.ApplyDetailPanel(_detailPanel);
             _root.Add(_body);
         }
 
@@ -378,12 +426,16 @@ namespace TechCosmos.Hub.Editor
             foreach (var group in filtered)
             {
                 _sidebarList.Add(HubUiFactory.Label(group.Key.ToUpperInvariant(), "hub-category-label"));
+                if (_sidebarList[_sidebarList.childCount - 1] is Label catLabel)
+                    HubColors.ApplyCategoryLabel(catLabel);
 
                 foreach (var pkg in group.OrderBy(p => p.displayName))
                 {
                     var presence = PackageDetector.GetPresence(pkg, _catalog);
                     var item = new VisualElement();
                     item.AddToClassList("hub-list-item");
+                    HubShellLayout.ApplyListItem(item);
+                    HubColors.ApplyListItem(item, pkg.id == _selectedPackageId);
                     if (pkg.id == _selectedPackageId)
                         item.AddToClassList("hub-list-item--selected");
                     if (_selectedPackageIds.Contains(pkg.id))
@@ -412,7 +464,9 @@ namespace TechCosmos.Hub.Editor
                         item.tooltip = depPlan.BlockReason;
                     }
 
-                    item.Add(HubUiFactory.Label(pkg.displayName, "hub-list-item-name"));
+                    var nameLbl = HubUiFactory.Label(pkg.displayName, "hub-list-item-name");
+                    HubColors.ApplyListItemName(nameLbl, pkg.id == _selectedPackageId);
+                    item.Add(nameLbl);
 
                     item.RegisterCallback<ClickEvent>(evt =>
                     {
@@ -435,6 +489,7 @@ namespace TechCosmos.Hub.Editor
 
             var batchRow = new VisualElement();
             batchRow.AddToClassList("hub-batch-row");
+            HubShellLayout.ApplyBatchRow(batchRow);
             _batchImportBtn = HubUiFactory.Button("导入选中 (0)", "hub-btn hub-btn--accent", ImportSelectedPackages);
             batchRow.Add(_batchImportBtn);
             batchRow.Add(HubUiFactory.Button("全选可见", "hub-btn hub-btn--ghost", SelectAllVisiblePackages));
@@ -444,6 +499,7 @@ namespace TechCosmos.Hub.Editor
                 UpdateBatchImportButton();
                 RefreshSidebar();
             }));
+            HubShellLayout.ApplyBtnRow(batchRow);
             _sidebarFooter.Add(batchRow);
             UpdateBatchImportButton();
 
@@ -464,6 +520,7 @@ namespace TechCosmos.Hub.Editor
             var label = HubSettings.ImportMode == HubImportMode.AssetsEmbed ? "嵌入选中" : "导入选中";
             _batchImportBtn.text = $"{label} ({_selectedPackageIds.Count})";
             _batchImportBtn.SetEnabled(_selectedPackageIds.Count > 0);
+            HubColors.RefreshButton(_batchImportBtn, "hub-btn hub-btn--accent");
         }
 
         private void ImportSelectedPackages()
@@ -503,18 +560,21 @@ namespace TechCosmos.Hub.Editor
             foreach (var recipe in _recipes.recipes)
             {
                 var status = GlueGenerator.Evaluate(recipe, _catalog, _recipes);
-                var item = new VisualElement();
-                item.AddToClassList("hub-list-item");
-                if (recipe.id == _selectedRecipeId)
-                    item.AddToClassList("hub-list-item--selected");
-
-                var dot = new VisualElement();
-                dot.AddToClassList("hub-status-dot");
-                dot.AddToClassList(status.CanGenerate ? "hub-status-dot--installed" : "hub-status-dot--missing");
-                item.Add(dot);
-                item.Add(HubUiFactory.Label(recipe.displayName, "hub-list-item-name"));
-
+                var selected = recipe.id == _selectedRecipeId;
                 var captured = recipe;
+
+                var item = HubUiFactory.SidebarItem(selected, el =>
+                {
+                    var dot = new VisualElement();
+                    dot.AddToClassList("hub-status-dot");
+                    HubColors.ApplyStatusDot(dot, status.CanGenerate);
+                    el.Add(dot);
+
+                    var nameLbl = HubUiFactory.Label(recipe.displayName, "hub-list-item-name");
+                    HubColors.ApplyListItemName(nameLbl, selected);
+                    el.Add(nameLbl);
+                });
+
                 item.RegisterCallback<ClickEvent>(_ =>
                 {
                     _selectedRecipeId = captured.id;
@@ -525,12 +585,16 @@ namespace TechCosmos.Hub.Editor
                 _sidebarList.Add(item);
             }
 
-            _sidebarFooter.Add(HubUiFactory.Button("生成全部就绪项", "hub-btn hub-btn--accent", () =>
+            var batchRow = new VisualElement();
+            batchRow.AddToClassList("hub-batch-row");
+            HubShellLayout.ApplyBatchRow(batchRow);
+            batchRow.Add(HubUiFactory.Button("生成全部就绪项", "hub-btn hub-btn--accent", () =>
             {
                 GlueGenerator.GenerateAllReady(_catalog, _recipes);
                 RefreshSidebar();
                 RefreshDetail();
             }));
+            _sidebarFooter.Add(batchRow);
         }
 
         private bool MatchesSearch(PackageCatalogEntry p)
@@ -583,8 +647,7 @@ namespace TechCosmos.Hub.Editor
             titleBlock.Add(HubUiFactory.Label(pkg.displayName, "hub-detail-title"));
             titleBlock.Add(HubUiFactory.Label(pkg.description, "hub-detail-desc"));
 
-            var meta = new VisualElement();
-            meta.AddToClassList("hub-detail-meta");
+            var meta = HubUiFactory.MetaRow();
             meta.Add(HubUiFactory.Label(pkg.category, "hub-chip hub-chip--category"));
             meta.Add(HubUiFactory.Label(pkg.id, "hub-chip"));
             meta.Add(PresenceBadge(presence));
@@ -593,6 +656,7 @@ namespace TechCosmos.Hub.Editor
                 "hub-chip"));
             titleBlock.Add(meta);
             header.Add(titleBlock);
+            HubShellLayout.ApplyDetailHeader(header);
             shell.Top.Add(header);
 
             var btnRow = new VisualElement();
@@ -604,6 +668,7 @@ namespace TechCosmos.Hub.Editor
 
             var importBtn = HubUiFactory.Button(importLabel, "hub-btn hub-btn--primary", () => ImportPackage(pkg));
             importBtn.SetEnabled(importPlan.CanImport);
+            HubColors.RefreshButton(importBtn, "hub-btn hub-btn--primary");
             importBtn.tooltip = importPlan.CanImport
                 ? (importPlan.PendingDependencyCount > 0
                     ? "将自动先导入未安装的依赖包"
@@ -614,6 +679,7 @@ namespace TechCosmos.Hub.Editor
             var updateLabel = isAssetsMode ? "重新同步" : "更新";
             var updateBtn = HubUiFactory.Button(updateLabel, "hub-btn hub-btn--accent", () => UpdatePackage(pkg));
             updateBtn.SetEnabled(PackageDetector.CanUpdate(pkg, _catalog));
+            HubColors.RefreshButton(updateBtn, "hub-btn hub-btn--accent");
             btnRow.Add(updateBtn);
 
             var removeLabel = isAssetsMode ? "从 Assets 移除" : "从 Manifest 移除";
@@ -632,6 +698,7 @@ namespace TechCosmos.Hub.Editor
             removeBtn.SetEnabled(isAssetsMode
                 ? presence == PackagePresence.AssetsEmbedded
                 : presence == PackagePresence.InManifest);
+            HubColors.RefreshButton(removeBtn, "hub-btn hub-btn--danger");
             btnRow.Add(removeBtn);
 
             if (isAssetsMode)
@@ -664,21 +731,22 @@ namespace TechCosmos.Hub.Editor
             });
             openBtn.SetEnabled(!string.IsNullOrEmpty(readmePath)
                 || (!string.IsNullOrEmpty(readmeFullPath) && File.Exists(readmeFullPath)));
+            HubColors.RefreshButton(openBtn, "hub-btn hub-btn--ghost");
             btnRow.Add(openBtn);
 
+            HubShellLayout.ApplyBtnRow(btnRow);
             shell.Top.Add(btnRow);
 
-            var depSection = HubUiFactory.DependencySection(importPlan, id =>
+            shell.ScrollContent.Add(HubUiFactory.Label("依赖关系", "hub-section-title"));
+            shell.ScrollContent.Add(HubUiFactory.DependencySection(importPlan, id =>
             {
                 if (string.IsNullOrEmpty(id)) return;
                 _selectedPackageId = id;
                 RefreshSidebar();
                 RefreshDetail();
-            });
-            shell.Top.Add(HubUiFactory.Label("依赖关系", "hub-section-title"));
-            shell.Top.Add(depSection);
+            }));
 
-            shell.Top.Add(HubUiFactory.Label("介绍 / README", "hub-section-title"));
+            shell.ScrollContent.Add(HubUiFactory.Label("介绍 / README", "hub-section-title"));
             AddReadmeCard(shell.ScrollContent, pkg, _catalog);
         }
 
@@ -697,20 +765,42 @@ namespace TechCosmos.Hub.Editor
             shell.Top.Add(HubUiFactory.Label(recipe.displayName, "hub-detail-title"));
             shell.Top.Add(HubUiFactory.Label(recipe.description, "hub-detail-desc"));
 
-            var meta = new VisualElement();
-            meta.AddToClassList("hub-detail-meta");
+            var header = new VisualElement();
+            header.AddToClassList("hub-detail-header");
+            HubShellLayout.ApplyDetailHeader(header);
+            var meta = HubUiFactory.MetaRow();
             meta.Add(HubUiFactory.Label(
                 $"输出 → {_recipes.outputRoot}/{GlueGenerator.GetOutputFileName(recipe)}",
                 "hub-chip"));
-            meta.Add(HubUiFactory.Label(
+            meta.Add(HubUiFactory.Badge(
                 status.CanGenerate ? "可生成" : "条件未满足",
-                status.CanGenerate ? "hub-badge hub-badge--ready" : "hub-badge hub-badge--pending"));
-            shell.Top.Add(meta);
+                status.CanGenerate ? "hub-badge--ready" : "hub-badge--pending"));
+            header.Add(meta);
+
+            var btnRow = new VisualElement();
+            btnRow.AddToClassList("hub-btn-row");
+            var genBtn = HubUiFactory.Button($"生成 {recipe.template}.g.cs", "hub-btn hub-btn--primary", () =>
+            {
+                try
+                {
+                    GlueGenerator.Generate(recipe, _recipes);
+                    RefreshSidebar();
+                    RefreshDetail();
+                }
+                catch (System.Exception ex) { Debug.LogError($"[Hub] {ex.Message}"); }
+            });
+            genBtn.SetEnabled(status.CanGenerate);
+            HubColors.RefreshButton(genBtn, "hub-btn hub-btn--primary");
+            btnRow.Add(genBtn);
+            HubShellLayout.ApplyBtnRow(btnRow);
+            header.Add(btnRow);
+            shell.Top.Add(header);
 
             shell.ScrollContent.Add(HubUiFactory.Label("生成条件", "hub-section-title"));
 
             var checklist = new VisualElement();
             checklist.AddToClassList("hub-checklist");
+            HubShellLayout.ApplyChecklist(checklist);
 
             if (recipe.requires != null)
             {
@@ -738,29 +828,8 @@ namespace TechCosmos.Hub.Editor
             shell.ScrollContent.Add(HubUiFactory.Label("详细说明", "hub-section-title"));
             AddMarkdownCard(shell.ScrollContent, GlueRecipeDocs.GetDoc(recipe));
 
-            var btnRow = new VisualElement();
-            btnRow.AddToClassList("hub-btn-row");
-            var genBtn = HubUiFactory.Button($"生成 {recipe.template}.g.cs", "hub-btn hub-btn--primary", () =>
-            {
-                try
-                {
-                    GlueGenerator.Generate(recipe, _recipes);
-                    RefreshSidebar();
-                    RefreshDetail();
-                }
-                catch (System.Exception ex) { Debug.LogError($"[Hub] {ex.Message}"); }
-            });
-            genBtn.SetEnabled(status.CanGenerate);
-            btnRow.Add(genBtn);
-            shell.Top.Add(btnRow);
-
             if (!status.CanGenerate)
-            {
-                var warn = new VisualElement();
-                warn.AddToClassList("hub-warning-box");
-                warn.Add(HubUiFactory.Label("请先导入所需包，并生成前置 Recipe。", "hub-warning-text"));
-                shell.Top.Add(warn);
-            }
+                shell.ScrollContent.Add(HubUiFactory.WarningBox("请先导入所需包，并生成前置 Recipe。"));
         }
 
         private void BuildProjectStructureSidebar()
@@ -775,14 +844,16 @@ namespace TechCosmos.Hub.Editor
 
             foreach (var preset in _structure.presets)
             {
-                var item = new VisualElement();
-                item.AddToClassList("hub-list-item");
-                if (preset.id == _selectedStructurePresetId)
-                    item.AddToClassList("hub-list-item--selected");
-
-                item.Add(HubUiFactory.Label(preset.displayName, "hub-list-item-name"));
-
+                var selected = preset.id == _selectedStructurePresetId;
                 var captured = preset;
+
+                var item = HubUiFactory.SidebarItem(selected, el =>
+                {
+                    var nameLbl = HubUiFactory.Label(preset.displayName, "hub-list-item-name");
+                    HubColors.ApplyListItemName(nameLbl, selected);
+                    el.Add(nameLbl);
+                });
+
                 item.RegisterCallback<ClickEvent>(_ =>
                 {
                     _selectedStructurePresetId = captured.id;
@@ -813,8 +884,7 @@ namespace TechCosmos.Hub.Editor
             shell.Top.Add(HubUiFactory.Label("一键生成项目结构", "hub-detail-title"));
             shell.Top.Add(HubUiFactory.Label(preset.description, "hub-detail-desc"));
 
-            var meta = new VisualElement();
-            meta.AddToClassList("hub-detail-meta");
+            var meta = HubUiFactory.MetaRow();
             meta.Add(HubUiFactory.Label($"{preset.folders?.Length ?? 0} 个主目录", "hub-chip"));
             if (preset.extraRoots != null && preset.extraRoots.Length > 0)
                 meta.Add(HubUiFactory.Label($"+{preset.extraRoots.Length} 扩展根", "hub-chip hub-chip--category"));
@@ -831,6 +901,7 @@ namespace TechCosmos.Hub.Editor
 
             var tree = new VisualElement();
             tree.AddToClassList("hub-readme-card");
+            HubColors.ApplyReadmeCard(tree);
 
             var rootDisplay = string.IsNullOrEmpty(HubSettings.ProjectRoot) ? preset.root : HubSettings.ProjectRoot;
             tree.Add(HubUiFactory.Label(rootDisplay + "/", "hub-tree-root"));
@@ -899,20 +970,18 @@ namespace TechCosmos.Hub.Editor
                     Debug.LogWarning($"[Hub] 目录尚不存在: {folder}，请先生成。");
             }));
 
+            HubShellLayout.ApplyBtnRow(btnRow);
             shell.Bottom.Add(btnRow);
 
-            var warn = new VisualElement();
-            warn.AddToClassList("hub-warning-box");
-            warn.Add(HubUiFactory.Label(
-                "框架包放在 Assets/Package-TechCosmos/ 或 UPM Git 依赖（只读）。业务代码、Resources、Art 放在 _Game 下。",
-                "hub-warning-text"));
-            shell.Bottom.Add(warn);
+            shell.Bottom.Add(HubUiFactory.WarningBox(
+                "框架包放在 Assets/Package-TechCosmos/ 或 UPM Git 依赖（只读）。业务代码、Resources、Art 放在 _Game 下。"));
         }
 
         private void ShowEmpty(string title, string hint)
         {
             var empty = new VisualElement();
             empty.AddToClassList("hub-empty-state");
+            HubColors.ApplyEmptyState(empty);
             empty.Add(HubUiFactory.Label(title, "hub-detail-title"));
             empty.Add(HubUiFactory.Label(hint, "hub-empty-text"));
             _detailPanel.Add(empty);

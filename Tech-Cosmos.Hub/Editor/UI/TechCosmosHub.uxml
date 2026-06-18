@@ -1,0 +1,4 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="TechCosmosHub.uss" />
+    <ui:VisualElement name="hub-root" class="hub-root" style="flex-grow: 1; flex-shrink: 1;" />
+</ui:UXML>

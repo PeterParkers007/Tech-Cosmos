@@ -1,25 +1,32 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEngine.UIElements;
 using UpmPackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace TechCosmos.Hub.Editor
 {
-    /// <summary>
-    /// 仅负责从 UPM / 本地路径加载 TechCosmosHub.uss，不写入 inline 布局样式（inline 会覆盖 USS 导致排版退化）。
-    /// </summary>
     internal static class HubTheme
     {
         private const string StylesheetRelative = "Editor/UI/TechCosmosHub.uss";
+        private const string UxmlRelative = "Editor/UI/TechCosmosHub.uxml";
+        public const string StylesheetGuid = "436c8836172968f488205d4b91707a69";
+
+        public static bool IsLoaded { get; private set; }
 
         public static StyleSheet Load()
         {
+            IsLoaded = false;
+
             foreach (var path in EnumerateStylesheetAssetPaths())
             {
-                var sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(path);
+                var sheet = LoadAtPath(path);
                 if (sheet != null)
+                {
+                    IsLoaded = true;
                     return sheet;
+                }
             }
 
             return null;
@@ -37,7 +44,10 @@ namespace TechCosmos.Hub.Editor
             }
 
             if (current != null && root.styleSheets.Contains(current))
+            {
+                IsLoaded = true;
                 return true;
+            }
 
             current = Load();
             if (current == null)
@@ -46,6 +56,39 @@ namespace TechCosmos.Hub.Editor
             if (!root.styleSheets.Contains(current))
                 root.styleSheets.Add(current);
             return true;
+        }
+
+        public static bool TryCloneShell(VisualElement host, out VisualElement hubRoot)
+        {
+            hubRoot = null;
+            if (host == null) return false;
+
+            var uxmlPath = $"{HubPaths.HubAssetPath}/{UxmlRelative}".Replace('\\', '/');
+            var tree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(uxmlPath);
+            if (tree == null)
+                return false;
+
+            tree.CloneTree(host);
+            hubRoot = host.Q<VisualElement>("hub-root");
+            return hubRoot != null;
+        }
+
+        private static StyleSheet LoadAtPath(string assetPath)
+        {
+            if (string.IsNullOrEmpty(assetPath))
+                return null;
+
+            assetPath = assetPath.Replace('\\', '/');
+            var sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(assetPath);
+            if (sheet != null)
+                return sheet;
+
+            var diskPath = Path.Combine(HubPaths.HubRoot, StylesheetRelative.Replace('/', Path.DirectorySeparatorChar));
+            if (!File.Exists(diskPath))
+                return null;
+
+            AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+            return AssetDatabase.LoadAssetAtPath<StyleSheet>(assetPath);
         }
 
         public static IEnumerable<string> EnumerateStylesheetAssetPaths()
@@ -72,6 +115,8 @@ namespace TechCosmos.Hub.Editor
                 if (seen.Add(path))
                     results.Add(path);
             }
+
+            Add(AssetDatabase.GUIDToAssetPath(StylesheetGuid));
 
             try
             {

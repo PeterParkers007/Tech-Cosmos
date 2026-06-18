@@ -1,6 +1,4 @@
 #if UNITY_EDITOR
-using System;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace TechCosmos.Hub.Editor
@@ -11,13 +9,55 @@ namespace TechCosmos.Hub.Editor
         {
             var l = new Label(text) { text = text };
             if (!string.IsNullOrEmpty(className)) l.AddToClassList(className);
+            RouteLabelStyle(l, className);
             return l;
         }
 
-        public static Button Button(string text, string className, Action onClick)
+        private static void RouteLabelStyle(Label l, string className)
+        {
+            if (string.IsNullOrEmpty(className)) return;
+
+            if (className == "hub-title") HubColors.ApplyTitle(l);
+            else if (className == "hub-subtitle") HubColors.ApplySubtitle(l);
+            else if (className == "hub-section-title") HubColors.ApplySectionTitle(l);
+            else if (className == "hub-detail-title") HubColors.ApplyDetailTitle(l);
+            else if (className == "hub-detail-desc") HubColors.ApplyDetailDesc(l);
+            else if (className == "hub-field-label") HubColors.ApplyFieldLabel(l);
+            else if (className == "hub-field-label-stack") HubColors.ApplyFieldLabel(l, stackAbove: true);
+            else if (className == "hub-sidebar-hint") HubColors.ApplySidebarHint(l);
+            else if (className == "hub-category-label") HubColors.ApplyCategoryLabel(l);
+            else if (className == "hub-empty-text") HubColors.ApplyEmptyText(l);
+            else if (className == "hub-warning-text") HubColors.ApplyWarningText(l);
+            else if (className == "hub-dep-heading") HubColors.ApplyDepHeading(l);
+            else if (className == "hub-dep-detail") HubColors.ApplyDepDetail(l);
+            else if (className == "hub-dep-block-reason") HubColors.ApplyDepBlockReason(l);
+            else if (className == "hub-tree-root") HubColors.ApplyTreeRoot(l);
+            else if (className == "hub-tree-item") HubColors.ApplyTreeItem(l);
+            else if (className.Contains("hub-chip--category")) HubColors.ApplyChip(l, category: true);
+            else if (className.Contains("hub-chip")) HubColors.ApplyChip(l);
+            else if (className.Contains("hub-list-item-name"))
+            {
+                // selected state applied separately via ApplyListItemName
+                l.style.fontSize = 12;
+                l.style.color = HubColors.BodyText;
+                l.style.flexGrow = 1;
+            }
+        }
+
+        public static VisualElement MetaRow()
+        {
+            var meta = new VisualElement();
+            meta.AddToClassList("hub-detail-meta");
+            HubShellLayout.ApplyDetailMeta(meta);
+            return meta;
+        }
+
+        public static Button Button(string text, string className, System.Action onClick)
         {
             var b = new Button(onClick) { text = text };
             if (!string.IsNullOrEmpty(className)) b.AddToClassList(className);
+            if (className != null && className.Contains("hub-btn"))
+                HubColors.RefreshButton(b, className);
             return b;
         }
 
@@ -25,35 +65,29 @@ namespace TechCosmos.Hub.Editor
         {
             var dot = new VisualElement();
             dot.AddToClassList("hub-status-dot");
-            dot.AddToClassList(presence switch
-            {
-                PackagePresence.InManifest => "hub-status-dot--installed",
-                PackagePresence.AssetsEmbedded => "hub-status-dot--installed",
-                PackagePresence.LocalOnly => "hub-status-dot--local",
-                _ => "hub-status-dot--missing"
-            });
+            var installed = presence is PackagePresence.InManifest or PackagePresence.AssetsEmbedded;
+            HubColors.ApplyStatusDot(dot, installed, presence == PackagePresence.LocalOnly);
             return dot;
         }
 
         public static VisualElement DependencyLinkRow(
             PackageDependencyLink link,
             bool showArrowIn,
-            Action<string> onSelectPackageId = null)
+            System.Action<string> onSelectPackageId = null)
         {
             var row = new VisualElement();
             row.AddToClassList("hub-dep-row");
+            HubShellLayout.ApplyDepRow(row);
 
             if (showArrowIn)
-            {
-                var arrow = Label("←", "hub-dep-arrow");
-                row.Add(arrow);
-            }
+                row.Add(Label("←", "hub-dep-arrow"));
 
             var nameBtn = Button(link.DisplayName ?? link.PackageId, "hub-dep-name", () =>
             {
                 onSelectPackageId?.Invoke(link.PackageId);
             });
             nameBtn.tooltip = link.PackageId;
+            HubColors.ApplyDepLinkButton(nameBtn);
             row.Add(nameBtn);
 
             var badgeClass = link.State switch
@@ -63,16 +97,14 @@ namespace TechCosmos.Hub.Editor
                 PackageDependencyState.Blocked => "hub-badge--missing",
                 _ => "hub-badge--missing"
             };
-            row.Add(Badge(StateLabel(link.State), "hub-badge " + badgeClass));
+            var stateLabel = StateLabel(link.State);
+            row.Add(Badge(stateLabel, badgeClass));
 
-            if (!string.IsNullOrEmpty(link.Detail))
+            if (!string.IsNullOrEmpty(link.Detail) && link.Detail != stateLabel)
                 row.Add(Label(link.Detail, "hub-dep-detail"));
 
             if (!showArrowIn)
-            {
-                var arrow = Label("→", "hub-dep-arrow");
-                row.Add(arrow);
-            }
+                row.Add(Label("→", "hub-dep-arrow"));
 
             return row;
         }
@@ -87,22 +119,21 @@ namespace TechCosmos.Hub.Editor
 
         public static VisualElement DependencySection(
             PackageImportPlan plan,
-            Action<string> onSelectPackageId)
+            System.Action<string> onSelectPackageId)
         {
             var section = new VisualElement();
             section.AddToClassList("hub-dep-section");
+            HubColors.ApplyDepSection(section);
 
             if (!plan.CanImport && !string.IsNullOrEmpty(plan.BlockReason))
-            {
-                var warn = Label(plan.BlockReason, "hub-dep-block-reason");
-                section.Add(warn);
-            }
+                section.Add(Label(plan.BlockReason, "hub-dep-block-reason"));
 
             if (plan.DependsOn.Count > 0)
             {
                 section.Add(Label("依赖于（需先拥有）", "hub-dep-heading"));
                 var up = new VisualElement();
                 up.AddToClassList("hub-dep-list");
+                HubShellLayout.ApplyDepList(up);
                 foreach (var link in plan.DependsOn)
                     up.Add(DependencyLinkRow(link, showArrowIn: true, onSelectPackageId));
                 section.Add(up);
@@ -113,6 +144,7 @@ namespace TechCosmos.Hub.Editor
                 section.Add(Label("被依赖于", "hub-dep-heading"));
                 var down = new VisualElement();
                 down.AddToClassList("hub-dep-list");
+                HubShellLayout.ApplyDepList(down);
                 foreach (var link in plan.DependedBy)
                     down.Add(DependencyLinkRow(link, showArrowIn: false, onSelectPackageId));
                 section.Add(down);
@@ -124,9 +156,10 @@ namespace TechCosmos.Hub.Editor
             return section;
         }
 
-        public static Label Badge(string text, string className)
+        public static Label Badge(string text, string badgeClass)
         {
-            var b = Label(text, "hub-badge " + className);
+            var b = Label(text, "hub-badge " + badgeClass);
+            HubColors.ApplyBadge(b, badgeClass);
             return b;
         }
 
@@ -134,36 +167,40 @@ namespace TechCosmos.Hub.Editor
         {
             var row = new VisualElement();
             row.AddToClassList("hub-check-item");
-
             var icon = Label(ok ? "✓" : "✗", ok ? "hub-check-icon hub-check-icon--ok" : "hub-check-icon hub-check-icon--fail");
             var label = Label(text, "hub-check-label");
+            HubColors.ApplyCheckItem(row, icon, label, ok);
             row.Add(icon);
             row.Add(label);
             return row;
         }
 
-        public static VisualElement Field(string label, string value, Action<string> onChanged)
+        public static VisualElement Field(string label, string value, System.Action<string> onChanged)
         {
             var row = new VisualElement();
             row.AddToClassList("hub-field-row");
+            HubShellLayout.ApplyFieldRow(row);
             row.Add(Label(label, "hub-field-label"));
 
             var field = new TextField { value = value };
             field.AddToClassList("hub-field-input");
+            HubColors.ApplyTextField(field);
             field.RegisterValueChangedCallback(evt => onChanged?.Invoke(evt.newValue));
             row.Add(field);
             return row;
         }
 
-        public static VisualElement ImportModeSelector(Action refresh)
+        public static VisualElement ImportModeSelector(System.Action refresh)
         {
             var row = new VisualElement();
             row.AddToClassList("hub-import-mode");
+            HubShellLayout.ApplyImportMode(row);
 
-            row.Add(Label("导入模式", "hub-field-label"));
+            row.Add(Label("导入模式", "hub-field-label-stack"));
 
             var btnRow = new VisualElement();
             btnRow.AddToClassList("hub-import-mode-row");
+            HubShellLayout.ApplyImportModeRow(btnRow);
 
             var gitBtn = Button("Git UPM", "hub-tab", () =>
             {
@@ -186,10 +223,17 @@ namespace TechCosmos.Hub.Editor
             btnRow.Add(gitBtn);
             btnRow.Add(assetsBtn);
             row.Add(btnRow);
-            row.Add(Label(HubSettings.AssetsPackageRoot, "hub-sidebar-hint"));
+            row.Add(Label(GetImportModeHint(), "hub-sidebar-hint"));
 
             UpdateImportModeButtons(btnRow);
             return row;
+        }
+
+        private static string GetImportModeHint()
+        {
+            return HubSettings.ImportMode == HubImportMode.AssetsEmbed
+                ? HubSettings.AssetsPackageRoot
+                : "Packages/manifest.json";
         }
 
         private static void UpdateImportModeButtons(VisualElement btnRow)
@@ -197,21 +241,49 @@ namespace TechCosmos.Hub.Editor
             var git = btnRow.Q<Button>("hub-mode-git");
             var assets = btnRow.Q<Button>("hub-mode-assets");
             if (git != null)
+            {
                 git.EnableInClassList("hub-tab--active", HubSettings.ImportMode == HubImportMode.GitUpm);
+                HubColors.ApplyModeToggle(git, HubSettings.ImportMode == HubImportMode.GitUpm);
+            }
             if (assets != null)
+            {
                 assets.EnableInClassList("hub-tab--active", HubSettings.ImportMode == HubImportMode.AssetsEmbed);
+                HubColors.ApplyModeToggle(assets, HubSettings.ImportMode == HubImportMode.AssetsEmbed);
+            }
         }
 
-        public static VisualElement ToggleRow(string label, bool value, Action<bool> onChanged)
+        public static VisualElement ToggleRow(string label, bool value, System.Action<bool> onChanged)
         {
             var row = new VisualElement();
             row.AddToClassList("hub-field-row");
+            HubShellLayout.ApplyFieldRow(row);
 
             var toggle = new Toggle(label) { value = value };
             toggle.AddToClassList("hub-toggle");
+            HubColors.ApplyToggle(toggle);
             toggle.RegisterValueChangedCallback(evt => onChanged?.Invoke(evt.newValue));
             row.Add(toggle);
             return row;
+        }
+
+        public static VisualElement WarningBox(string text)
+        {
+            var box = new VisualElement();
+            box.AddToClassList("hub-warning-box");
+            HubColors.ApplyWarningBox(box);
+            box.Add(Label(text, "hub-warning-text"));
+            return box;
+        }
+
+        public static VisualElement SidebarItem(bool selected, System.Action<VisualElement> buildContent)
+        {
+            var item = new VisualElement();
+            item.AddToClassList("hub-list-item");
+            if (selected) item.AddToClassList("hub-list-item--selected");
+            HubShellLayout.ApplyListItem(item);
+            HubColors.ApplyListItem(item, selected);
+            buildContent?.Invoke(item);
+            return item;
         }
     }
 }
