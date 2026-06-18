@@ -448,7 +448,7 @@
     font-size: 10px;
     -unity-font-style: bold;
     color: rgb(120, 130, 150);
-    letter-spacing: 0.06em;
+    letter-spacing: 0.5px;
     margin-top: 6px;
     margin-bottom: 6px;
 }
@@ -1202,7 +1202,7 @@
     font-size: 11px;
     -unity-font-style: bold;
     color: rgb(210, 216, 228);
-    letter-spacing: 0.04em;
+    letter-spacing: 0.4px;
 }
 
 .hub-git-version-count {
