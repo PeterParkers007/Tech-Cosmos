@@ -35,6 +35,95 @@ namespace TechCosmos.Hub.Editor
             return dot;
         }
 
+        public static VisualElement DependencyLinkRow(
+            PackageDependencyLink link,
+            bool showArrowIn,
+            Action<string> onSelectPackageId = null)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("hub-dep-row");
+
+            if (showArrowIn)
+            {
+                var arrow = Label("←", "hub-dep-arrow");
+                row.Add(arrow);
+            }
+
+            var nameBtn = Button(link.DisplayName ?? link.PackageId, "hub-dep-name", () =>
+            {
+                onSelectPackageId?.Invoke(link.PackageId);
+            });
+            nameBtn.tooltip = link.PackageId;
+            row.Add(nameBtn);
+
+            var badgeClass = link.State switch
+            {
+                PackageDependencyState.Installed => "hub-badge--installed",
+                PackageDependencyState.PendingImport => "hub-badge--pending",
+                PackageDependencyState.Blocked => "hub-badge--missing",
+                _ => "hub-badge--missing"
+            };
+            row.Add(Badge(StateLabel(link.State), "hub-badge " + badgeClass));
+
+            if (!string.IsNullOrEmpty(link.Detail))
+                row.Add(Label(link.Detail, "hub-dep-detail"));
+
+            if (!showArrowIn)
+            {
+                var arrow = Label("→", "hub-dep-arrow");
+                row.Add(arrow);
+            }
+
+            return row;
+        }
+
+        private static string StateLabel(PackageDependencyState state) => state switch
+        {
+            PackageDependencyState.Installed => "已导入",
+            PackageDependencyState.PendingImport => "待导入",
+            PackageDependencyState.Blocked => "不可导入",
+            _ => "未收录"
+        };
+
+        public static VisualElement DependencySection(
+            PackageImportPlan plan,
+            Action<string> onSelectPackageId)
+        {
+            var section = new VisualElement();
+            section.AddToClassList("hub-dep-section");
+
+            if (!plan.CanImport && !string.IsNullOrEmpty(plan.BlockReason))
+            {
+                var warn = Label(plan.BlockReason, "hub-dep-block-reason");
+                section.Add(warn);
+            }
+
+            if (plan.DependsOn.Count > 0)
+            {
+                section.Add(Label("依赖于（需先拥有）", "hub-dep-heading"));
+                var up = new VisualElement();
+                up.AddToClassList("hub-dep-list");
+                foreach (var link in plan.DependsOn)
+                    up.Add(DependencyLinkRow(link, showArrowIn: true, onSelectPackageId));
+                section.Add(up);
+            }
+
+            if (plan.DependedBy.Count > 0)
+            {
+                section.Add(Label("被依赖于", "hub-dep-heading"));
+                var down = new VisualElement();
+                down.AddToClassList("hub-dep-list");
+                foreach (var link in plan.DependedBy)
+                    down.Add(DependencyLinkRow(link, showArrowIn: false, onSelectPackageId));
+                section.Add(down);
+            }
+
+            if (plan.DependsOn.Count == 0 && plan.DependedBy.Count == 0)
+                section.Add(Label("catalog 中未配置依赖关系。", "hub-dep-empty"));
+
+            return section;
+        }
+
         public static Label Badge(string text, string className)
         {
             var b = Label(text, "hub-badge " + className);

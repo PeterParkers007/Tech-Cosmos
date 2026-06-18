@@ -24,6 +24,10 @@ export function validateCatalog(catalog) {
 
   const packages = catalog.packages || [];
   const ids = new Set();
+  for (const p of packages) {
+    if (p?.id?.trim()) ids.add(p.id.trim());
+  }
+
   for (let i = 0; i < packages.length; i++) {
     const p = packages[i];
     const label = p.displayName || p.id || `#${i + 1}`;
@@ -37,6 +41,14 @@ export function validateCatalog(catalog) {
     if (!p.category?.trim()) push(issues, "warning", "catalog", `${p.id || label}: 缺少 category`, p.id);
     if (p.id === "com.techcosmos.hub") {
       push(issues, "warning", "catalog", "Hub 自身不应出现在 catalog（会被 UI 过滤）", p.id);
+    }
+
+    for (const dep of p.dependsOn || []) {
+      if (!dep?.trim()) push(issues, "error", "catalog", `${p.id || label}: dependsOn 含空项`, p.id);
+      else if (dep === p.id) push(issues, "error", "catalog", `${p.id}: 不能依赖自身`, p.id);
+      else if (!ids.has(dep)) {
+        push(issues, "warning", "catalog", `${p.id}: dependsOn 未在 catalog 中找到 ${dep}`, p.id);
+      }
     }
   }
 

@@ -37,6 +37,7 @@ namespace TechCosmos.Hub.Editor
         public string category;
         public string description;
         public string gitUrl;
+        public string[] dependsOn = Array.Empty<string>();
     }
 
     [Serializable]

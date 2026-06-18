@@ -295,6 +295,7 @@ function addItem() {
       category: "Framework",
       description: "",
       gitUrl: "",
+      dependsOn: [],
     };
     state.catalog.packages.push(p);
     state.selectedId = p.id;
@@ -413,6 +414,7 @@ async function renderEditor() {
       <div class="field"><label for="category">分类</label><select id="category" name="category">${cats}</select></div>
       ${field("描述", "description", p.description, { type: "textarea", rows: 3 })}
       ${field("Git URL（可选）", "gitUrl", p.gitUrl, { hint: "留空表示仅本地/Assets 嵌入" })}
+      ${chipEditor("依赖包 dependsOn", "dependsOn", p.dependsOn || [], (state.catalog?.packages || []).map((x) => x.id).filter((id) => id !== p.id))}
       <div class="form-actions">
         <button type="button" class="btn btn-primary" id="applyBtn">应用修改</button>
       </div>`;
@@ -529,6 +531,8 @@ function bindChipField(fieldId, arr, onChange) {
 }
 
 function bindCatalogForm(p) {
+  bindChipField("dependsOn", p.dependsOn || (p.dependsOn = []), () => markDirty("catalog"));
+
   $("#applyBtn").addEventListener("click", () => {
     const oldId = p.id;
     p.id = $("#id").value.trim();
@@ -538,6 +542,7 @@ function bindCatalogForm(p) {
     p.description = $("#description").value.trim();
     p.gitUrl = $("#gitUrl").value.trim();
     if (!p.gitUrl) delete p.gitUrl;
+    if (!p.dependsOn?.length) delete p.dependsOn;
     if (oldId !== p.id) state.selectedId = p.id;
     markDirty("catalog");
     render();

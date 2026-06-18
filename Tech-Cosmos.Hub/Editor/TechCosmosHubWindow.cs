@@ -398,6 +398,15 @@ namespace TechCosmos.Hub.Editor
                     item.Add(check);
 
                     item.Add(HubUiFactory.StatusDot(presence));
+
+                    var depPlan = PackageDependencyResolver.Evaluate(pkg, _catalog);
+                    if (!depPlan.CanImport && !PackageDetector.IsRequirementMet(pkg.id, _catalog)
+                        && depPlan.DependsOn.Count > 0)
+                    {
+                        item.Add(HubUiFactory.Label("!", "hub-list-item-dep-warn"));
+                        item.tooltip = depPlan.BlockReason;
+                    }
+
                     item.Add(HubUiFactory.Label(pkg.displayName, "hub-list-item-name"));
 
                     item.RegisterCallback<ClickEvent>(evt =>
@@ -557,6 +566,7 @@ namespace TechCosmos.Hub.Editor
             }
 
             var presence = PackageDetector.GetPresence(pkg, _catalog);
+            var importPlan = PackageDependencyResolver.Evaluate(pkg, _catalog);
             var isAssetsMode = HubSettings.ImportMode == HubImportMode.AssetsEmbed;
             var shell = CreateDetailShell();
 
@@ -584,8 +594,16 @@ namespace TechCosmos.Hub.Editor
             btnRow.AddToClassList("hub-btn-row");
 
             var importLabel = isAssetsMode ? "嵌入到 Assets" : "Git 导入";
+            if (importPlan.PendingDependencyCount > 0)
+                importLabel += $"（+{importPlan.PendingDependencyCount} 依赖）";
+
             var importBtn = HubUiFactory.Button(importLabel, "hub-btn hub-btn--primary", () => ImportPackage(pkg));
-            importBtn.SetEnabled(PackageDetector.CanImport(pkg, _catalog));
+            importBtn.SetEnabled(importPlan.CanImport);
+            importBtn.tooltip = importPlan.CanImport
+                ? (importPlan.PendingDependencyCount > 0
+                    ? "将自动先导入未安装的依赖包"
+                    : string.Empty)
+                : importPlan.BlockReason;
             btnRow.Add(importBtn);
 
             var updateLabel = isAssetsMode ? "重新同步" : "更新";
@@ -644,6 +662,16 @@ namespace TechCosmos.Hub.Editor
             btnRow.Add(openBtn);
 
             shell.Top.Add(btnRow);
+
+            shell.Top.Add(HubUiFactory.Label("依赖关系", "hub-section-title"));
+            shell.Top.Add(HubUiFactory.DependencySection(importPlan, id =>
+            {
+                if (string.IsNullOrEmpty(id)) return;
+                _selectedPackageId = id;
+                RefreshSidebar();
+                RefreshDetail();
+            }));
+
             shell.Top.Add(HubUiFactory.Label("介绍 / README", "hub-section-title"));
             AddReadmeCard(shell.ScrollContent, pkg, _catalog);
         }
@@ -924,9 +952,25 @@ namespace TechCosmos.Hub.Editor
         {
             try
             {
-                PackageInstaller.ImportPackage(pkg, _catalog);
+                var result = PackageInstaller.ImportPackageWithDependencies(pkg, _catalog);
                 if (HubSettings.ImportMode == HubImportMode.GitUpm)
                     _pendingResolve = true;
+
+                if (result.Failed.Count > 0)
+                {
+                    EditorUtility.DisplayDialog("导入失败", string.Join("\n", result.Failed), "确定");
+                    return;
+                }
+
+                if (result.Succeeded.Count > 1)
+                {
+                    EditorUtility.DisplayDialog(
+                        "导入完成",
+                        $"已导入 {result.Succeeded.Count} 个包（含依赖）：\n• " +
+                        string.Join("\n• ", result.Succeeded),
+                        "确定");
+                }
+
                 EditorApplication.delayCall += ReloadData;
             }
             catch (System.Exception ex)

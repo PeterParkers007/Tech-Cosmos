@@ -156,6 +156,13 @@ namespace TechCosmos.Hub.Editor
 
         public static bool CanImport(PackageCatalogEntry entry, PackageCatalogFile catalog)
         {
+            return PackageDependencyResolver.Evaluate(entry, catalog).CanImport;
+        }
+
+        public static bool CanImportSelf(PackageCatalogEntry entry, PackageCatalogFile catalog)
+        {
+            if (entry == null || catalog == null) return false;
+
             var presence = GetPresence(entry, catalog);
 
             if (HubSettings.ImportMode == HubImportMode.AssetsEmbed)
@@ -185,6 +192,36 @@ namespace TechCosmos.Hub.Editor
     public static class PackageInstaller
     {
         public static void ImportPackage(PackageCatalogEntry entry, PackageCatalogFile catalog)
+        {
+            ImportPackageWithDependencies(entry, catalog);
+        }
+
+        public static PackageBatchImportResult ImportPackageWithDependencies(
+            PackageCatalogEntry entry, PackageCatalogFile catalog)
+        {
+            var plan = PackageDependencyResolver.Evaluate(entry, catalog);
+            if (!plan.CanImport)
+                throw new InvalidOperationException(plan.BlockReason ?? $"无法导入 {entry.displayName}。");
+
+            var result = new PackageBatchImportResult();
+            foreach (var pkg in plan.ImportOrder)
+            {
+                try
+                {
+                    ImportPackageSingle(pkg, catalog);
+                    result.Succeeded.Add(pkg.displayName ?? pkg.id);
+                }
+                catch (Exception ex)
+                {
+                    result.Failed.Add($"{pkg.displayName}: {ex.Message}");
+                    break;
+                }
+            }
+
+            return result;
+        }
+
+        private static void ImportPackageSingle(PackageCatalogEntry entry, PackageCatalogFile catalog)
         {
             if (HubSettings.ImportMode == HubImportMode.AssetsEmbed)
             {
@@ -288,24 +325,26 @@ namespace TechCosmos.Hub.Editor
             var result = new PackageBatchImportResult();
             if (entries == null) return result;
 
-            foreach (var entry in entries)
+            var order = PackageDependencyResolver.BuildBatchImportOrder(entries, catalog);
+            foreach (var entry in order)
             {
-                if (entry == null) continue;
                 try
                 {
-                    if (!PackageDetector.CanImport(entry, catalog))
-                    {
-                        result.Skipped.Add(entry.displayName ?? entry.id);
-                        continue;
-                    }
-
-                    ImportPackage(entry, catalog);
+                    ImportPackageSingle(entry, catalog);
                     result.Succeeded.Add(entry.displayName ?? entry.id);
                 }
                 catch (Exception ex)
                 {
                     result.Failed.Add($"{entry.displayName}: {ex.Message}");
                 }
+            }
+
+            foreach (var entry in entries)
+            {
+                if (entry == null) continue;
+                var plan = PackageDependencyResolver.Evaluate(entry, catalog);
+                if (!plan.CanImport && !result.Succeeded.Contains(entry.displayName ?? entry.id))
+                    result.Skipped.Add(entry.displayName ?? entry.id);
             }
 
             return result;
