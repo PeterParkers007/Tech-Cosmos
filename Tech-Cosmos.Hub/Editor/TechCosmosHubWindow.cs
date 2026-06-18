@@ -38,7 +38,8 @@ namespace TechCosmos.Hub.Editor
         private Button _tabProjectStructure;
         private ToolbarSearchField _searchField;
         private Button _batchImportBtn;
-        private bool _stylesAttached;
+        private StyleSheet _hubStylesheet;
+        private bool _stylesheetRetryScheduled;
 
         [MenuItem("Tech-Cosmos/Hub", false, 0)]
         public static void Open()
@@ -50,10 +51,10 @@ namespace TechCosmos.Hub.Editor
 
         private void CreateGUI()
         {
-            LoadStylesheet();
-
             rootVisualElement.style.flexGrow = 1;
             rootVisualElement.style.flexDirection = FlexDirection.Column;
+
+            AttachStylesheet(forceReload: true);
 
             _root = new VisualElement();
             _root.AddToClassList("hub-root");
@@ -82,69 +83,48 @@ namespace TechCosmos.Hub.Editor
             foreach (var w in Resources.FindObjectsOfTypeAll<TechCosmosHubWindow>())
             {
                 if (w != null)
-                    w.RebuildUi();
+                    w.RefreshAfterPackageChange();
             }
         }
 
-        private void RebuildUi()
+        private void RefreshAfterPackageChange()
         {
-            EditorApplication.update -= OnEditorUpdate;
-            _stylesAttached = false;
+            AttachStylesheet(forceReload: true);
+            ReloadData();
+        }
+
+        private void AttachStylesheet(bool forceReload)
+        {
+            if (HubTheme.Attach(rootVisualElement, ref _hubStylesheet, forceReload))
+            {
+                _stylesheetRetryScheduled = false;
+                return;
+            }
+
+            var paths = string.Join("\n  ", HubTheme.EnumerateStylesheetAssetPaths());
+            Debug.LogWarning(
+                "[Tech-Cosmos Hub] 未能加载 TechCosmosHub.uss，已启用降级配色。\n" +
+                $"尝试路径:\n  {paths}\n" +
+                "请关闭 Hub 窗口后重新打开；若仍失败，在 Package Manager 中 Remove 再 Add Hub 包。");
 
             if (_root != null)
-                _root.RemoveFromHierarchy();
-            rootVisualElement.Clear();
+                HubTheme.ApplyFallbackChrome(_root, _header, _body);
 
-            _root = null;
-            _header = null;
-            _body = null;
-            _sidebarList = null;
-            _detailPanel = null;
-            _sidebarFooter = null;
-            _batchImportBtn = null;
-            _searchField = null;
-            _tabPackages = null;
-            _tabGlue = null;
-            _tabProjectStructure = null;
-            _statInstalled = null;
-            _statLocal = null;
-            _statTotal = null;
-
-            CreateGUI();
-        }
-
-        private void LoadStylesheet()
-        {
-            if (_stylesAttached)
+            if (_stylesheetRetryScheduled)
                 return;
 
-            if (HubTheme.TryAttach(rootVisualElement, out var sheet) && sheet != null)
+            _stylesheetRetryScheduled = true;
+            EditorApplication.delayCall += () =>
             {
-                _stylesAttached = true;
-                return;
-            }
-
-            var paths = string.Join(", ", HubTheme.EnumerateStylesheetAssetPaths());
-            Debug.LogWarning(
-                "[Tech-Cosmos Hub] 未能加载 TechCosmosHub.uss，界面将使用降级布局。\n" +
-                $"尝试路径: {paths}\n" +
-                "若刚 Update 过 Hub 包，请关闭窗口后重新打开 Tech-Cosmos → Hub。");
-
-            EditorApplication.delayCall += RetryLoadStylesheet;
-        }
-
-        private void RetryLoadStylesheet()
-        {
-            if (_stylesAttached || this == null)
-                return;
-
-            if (HubTheme.TryAttach(rootVisualElement, out _))
-            {
-                _stylesAttached = true;
-                RefreshStats();
-                RefreshSidebar();
-                RefreshDetail();
-            }
+                if (this == null) return;
+                AttachStylesheet(forceReload: true);
+                if (_hubStylesheet != null)
+                {
+                    RefreshStats();
+                    RefreshSidebar();
+                    RefreshDetail();
+                }
+            };
         }
 
         private void OnEditorUpdate()
@@ -720,11 +700,10 @@ namespace TechCosmos.Hub.Editor
                 RefreshSidebar();
                 RefreshDetail();
             });
-            HubTheme.ApplyDependencySectionLayout(depSection);
-            shell.ScrollContent.Add(HubUiFactory.Label("依赖关系", "hub-section-title"));
-            shell.ScrollContent.Add(depSection);
+            shell.Top.Add(HubUiFactory.Label("依赖关系", "hub-section-title"));
+            shell.Top.Add(depSection);
 
-            shell.ScrollContent.Add(HubUiFactory.Label("介绍 / README", "hub-section-title"));
+            shell.Top.Add(HubUiFactory.Label("介绍 / README", "hub-section-title"));
             AddReadmeCard(shell.ScrollContent, pkg, _catalog);
         }
 

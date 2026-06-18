@@ -16,7 +16,7 @@ namespace TechCosmos.Hub.Editor
         {
             foreach (var path in EnumerateStylesheetAssetPaths())
             {
-                var sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(path);
+                var sheet = LoadAtPath(path);
                 if (sheet != null)
                     return sheet;
             }
@@ -24,21 +24,55 @@ namespace TechCosmos.Hub.Editor
             return null;
         }
 
-        public static bool TryAttach(VisualElement root, out StyleSheet sheet)
+        public static bool Attach(VisualElement root, ref StyleSheet current, bool forceReload)
         {
-            sheet = Load();
-            if (sheet == null || root == null)
+            if (root == null)
                 return false;
 
-            if (!root.styleSheets.Contains(sheet))
-                root.styleSheets.Add(sheet);
+            if (forceReload && current != null)
+            {
+                root.styleSheets.Remove(current);
+                current = null;
+            }
+
+            if (current != null && root.styleSheets.Contains(current))
+                return true;
+
+            if (current != null)
+                root.styleSheets.Remove(current);
+
+            current = Load();
+            if (current == null)
+                return false;
+
+            if (!root.styleSheets.Contains(current))
+                root.styleSheets.Add(current);
             return true;
+        }
+
+        private static StyleSheet LoadAtPath(string assetPath)
+        {
+            if (string.IsNullOrEmpty(assetPath))
+                return null;
+
+            assetPath = assetPath.Replace('\\', '/');
+            var sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(assetPath);
+            if (sheet != null)
+                return sheet;
+
+            if (assetPath.StartsWith("Packages/", System.StringComparison.Ordinal)
+                || assetPath.StartsWith("Assets/", System.StringComparison.Ordinal))
+            {
+                AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+                sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(assetPath);
+            }
+
+            return sheet;
         }
 
         public static IEnumerable<string> EnumerateStylesheetAssetPaths()
         {
             var seen = new HashSet<string>();
-
             foreach (var path in CollectPaths())
             {
                 if (string.IsNullOrEmpty(path)) continue;
@@ -50,8 +84,8 @@ namespace TechCosmos.Hub.Editor
 
         private static IEnumerable<string> CollectPaths()
         {
-            var seen = new HashSet<string>();
             var results = new List<string>();
+            var seen = new HashSet<string>();
 
             void Add(string path)
             {
@@ -61,43 +95,49 @@ namespace TechCosmos.Hub.Editor
                     results.Add(path);
             }
 
-            Add($"{HubPaths.HubAssetPath}/{StylesheetRelative}");
-
-            UpmPackageInfo info = null;
             try
             {
-                info = UpmPackageInfo.FindForPackageName(HubCatalog.SelfPackageId);
+                var info = UpmPackageInfo.FindForPackageName(HubCatalog.SelfPackageId);
+                if (info != null && !string.IsNullOrEmpty(info.assetPath))
+                    Add($"{info.assetPath}/{StylesheetRelative}");
             }
             catch
             {
                 // ignored
             }
 
-            if (info != null && !string.IsNullOrEmpty(info.assetPath))
-                Add($"{info.assetPath}/{StylesheetRelative}");
+            Add($"{HubPaths.HubAssetPath}/{StylesheetRelative}");
 
             var guids = AssetDatabase.FindAssets("TechCosmosHub t:StyleSheet");
             foreach (var guid in guids)
                 Add(AssetDatabase.GUIDToAssetPath(guid));
 
-            var disk = Path.Combine(HubPaths.HubRoot, StylesheetRelative.Replace('/', Path.DirectorySeparatorChar));
-            if (File.Exists(disk))
-            {
-                var relative = ToProjectRelativeAssetPath(disk);
-                if (!string.IsNullOrEmpty(relative))
-                    Add(relative);
-            }
-
             return results;
         }
 
-        private static string ToProjectRelativeAssetPath(string fullPath)
+        public static void ApplyFallbackChrome(VisualElement root, VisualElement header, VisualElement body)
         {
-            var dataPath = Path.GetFullPath(Application.dataPath).TrimEnd(Path.DirectorySeparatorChar);
-            var full = Path.GetFullPath(fullPath);
-            if (!full.StartsWith(dataPath, System.StringComparison.OrdinalIgnoreCase))
-                return null;
-            return full.Substring(dataPath.Length - "Assets".Length).Replace('\\', '/');
+            var pageBg = new Color(22f / 255f, 24f / 255f, 30f / 255f);
+            var panelBg = new Color(30f / 255f, 33f / 255f, 42f / 255f);
+            var headerBg = new Color(28f / 255f, 32f / 255f, 42f / 255f);
+
+            if (root != null)
+            {
+                root.style.backgroundColor = pageBg;
+                root.style.flexDirection = FlexDirection.Column;
+                root.style.flexGrow = 1;
+            }
+
+            if (header != null)
+                header.style.backgroundColor = headerBg;
+
+            if (body != null)
+            {
+                body.style.flexDirection = FlexDirection.Row;
+                body.style.flexGrow = 1;
+            }
+
+            ApplyShellLayout(root, body, null);
         }
 
         public static void ApplyShellLayout(VisualElement root, VisualElement body, VisualElement detailPanel)
@@ -126,6 +166,7 @@ namespace TechCosmos.Hub.Editor
                 detailPanel.style.minWidth = 0;
                 detailPanel.style.minHeight = 0;
                 detailPanel.style.overflow = Overflow.Hidden;
+                detailPanel.style.backgroundColor = new Color(30f / 255f, 33f / 255f, 42f / 255f);
             }
         }
 
@@ -163,13 +204,7 @@ namespace TechCosmos.Hub.Editor
             sidebar.style.flexGrow = 0;
             sidebar.style.flexDirection = FlexDirection.Column;
             sidebar.style.minHeight = 0;
-        }
-
-        public static void ApplyDependencySectionLayout(VisualElement section)
-        {
-            if (section == null) return;
-            section.style.flexShrink = 0;
-            section.style.flexDirection = FlexDirection.Column;
+            sidebar.style.backgroundColor = new Color(30f / 255f, 33f / 255f, 42f / 255f);
         }
 
         public static void ApplyReadmeCardLayout(VisualElement card)

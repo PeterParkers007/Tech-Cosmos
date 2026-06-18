@@ -94,8 +94,6 @@ namespace TechCosmos.Hub.Editor
         {
             var section = new VisualElement();
             section.AddToClassList("hub-dep-section");
-            section.style.flexShrink = 0;
-            section.style.flexDirection = FlexDirection.Column;
 
             if (!plan.CanImport && !string.IsNullOrEmpty(plan.BlockReason))
             {
