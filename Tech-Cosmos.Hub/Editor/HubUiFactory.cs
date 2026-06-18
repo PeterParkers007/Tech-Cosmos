@@ -42,6 +42,9 @@ namespace TechCosmos.Hub.Editor
         {
             var row = new VisualElement();
             row.AddToClassList("hub-dep-row");
+            row.style.flexShrink = 0;
+            row.style.flexDirection = FlexDirection.Row;
+            row.style.alignItems = Align.Center;
 
             if (showArrowIn)
             {
@@ -91,6 +94,8 @@ namespace TechCosmos.Hub.Editor
         {
             var section = new VisualElement();
             section.AddToClassList("hub-dep-section");
+            section.style.flexShrink = 0;
+            section.style.flexDirection = FlexDirection.Column;
 
             if (!plan.CanImport && !string.IsNullOrEmpty(plan.BlockReason))
             {
@@ -103,6 +108,8 @@ namespace TechCosmos.Hub.Editor
                 section.Add(Label("依赖于（需先拥有）", "hub-dep-heading"));
                 var up = new VisualElement();
                 up.AddToClassList("hub-dep-list");
+                up.style.flexDirection = FlexDirection.Column;
+                up.style.flexShrink = 0;
                 foreach (var link in plan.DependsOn)
                     up.Add(DependencyLinkRow(link, showArrowIn: true, onSelectPackageId));
                 section.Add(up);
@@ -113,6 +120,8 @@ namespace TechCosmos.Hub.Editor
                 section.Add(Label("被依赖于", "hub-dep-heading"));
                 var down = new VisualElement();
                 down.AddToClassList("hub-dep-list");
+                down.style.flexDirection = FlexDirection.Column;
+                down.style.flexShrink = 0;
                 foreach (var link in plan.DependedBy)
                     down.Add(DependencyLinkRow(link, showArrowIn: false, onSelectPackageId));
                 section.Add(down);

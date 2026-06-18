@@ -38,6 +38,7 @@ namespace TechCosmos.Hub.Editor
         private Button _tabProjectStructure;
         private ToolbarSearchField _searchField;
         private Button _batchImportBtn;
+        private bool _stylesAttached;
 
         [MenuItem("Tech-Cosmos/Hub", false, 0)]
         public static void Open()
@@ -62,11 +63,13 @@ namespace TechCosmos.Hub.Editor
             BuildHeader();
             BuildTabs();
             BuildBody();
+            HubTheme.ApplyShellLayout(_root, _body, _detailPanel);
 
             _root.RegisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
 
-            ReloadData();
+            EditorApplication.update -= OnEditorUpdate;
             EditorApplication.update += OnEditorUpdate;
+            ReloadData();
         }
 
         private void OnDisable()
@@ -79,23 +82,69 @@ namespace TechCosmos.Hub.Editor
             foreach (var w in Resources.FindObjectsOfTypeAll<TechCosmosHubWindow>())
             {
                 if (w != null)
-                    w.ReloadData();
+                    w.RebuildUi();
             }
+        }
+
+        private void RebuildUi()
+        {
+            EditorApplication.update -= OnEditorUpdate;
+            _stylesAttached = false;
+
+            if (_root != null)
+                _root.RemoveFromHierarchy();
+            rootVisualElement.Clear();
+
+            _root = null;
+            _header = null;
+            _body = null;
+            _sidebarList = null;
+            _detailPanel = null;
+            _sidebarFooter = null;
+            _batchImportBtn = null;
+            _searchField = null;
+            _tabPackages = null;
+            _tabGlue = null;
+            _tabProjectStructure = null;
+            _statInstalled = null;
+            _statLocal = null;
+            _statTotal = null;
+
+            CreateGUI();
         }
 
         private void LoadStylesheet()
         {
-            var direct = $"{HubPaths.HubAssetPath}/Editor/UI/TechCosmosHub.uss";
-            var sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(direct);
-            if (sheet == null)
+            if (_stylesAttached)
+                return;
+
+            if (HubTheme.TryAttach(rootVisualElement, out var sheet) && sheet != null)
             {
-                var guids = AssetDatabase.FindAssets("TechCosmosHub t:StyleSheet");
-                if (guids.Length > 0)
-                    sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(AssetDatabase.GUIDToAssetPath(guids[0]));
+                _stylesAttached = true;
+                return;
             }
 
-            if (sheet != null)
-                rootVisualElement.styleSheets.Add(sheet);
+            var paths = string.Join(", ", HubTheme.EnumerateStylesheetAssetPaths());
+            Debug.LogWarning(
+                "[Tech-Cosmos Hub] 未能加载 TechCosmosHub.uss，界面将使用降级布局。\n" +
+                $"尝试路径: {paths}\n" +
+                "若刚 Update 过 Hub 包，请关闭窗口后重新打开 Tech-Cosmos → Hub。");
+
+            EditorApplication.delayCall += RetryLoadStylesheet;
+        }
+
+        private void RetryLoadStylesheet()
+        {
+            if (_stylesAttached || this == null)
+                return;
+
+            if (HubTheme.TryAttach(rootVisualElement, out _))
+            {
+                _stylesAttached = true;
+                RefreshStats();
+                RefreshSidebar();
+                RefreshDetail();
+            }
         }
 
         private void OnEditorUpdate()
@@ -177,6 +226,7 @@ namespace TechCosmos.Hub.Editor
             shell.Scroll.contentContainer.style.alignItems = Align.Stretch;
             shell.Scroll.contentContainer.Add(shell.ScrollContent);
             _detailPanel.Add(shell.Scroll);
+            HubTheme.ApplyDetailShellLayout(shell.Top, shell.Scroll, shell.ScrollContent);
 
             if (withBottom)
             {
@@ -192,8 +242,7 @@ namespace TechCosmos.Hub.Editor
         {
             var card = new VisualElement();
             card.AddToClassList("hub-readme-card");
-            card.style.flexShrink = 0;
-            card.style.flexDirection = FlexDirection.Column;
+            HubTheme.ApplyReadmeCardLayout(card);
             card.Add(HubMarkdownRenderer.Render(markdown, baseDirectory));
             scrollContent.Add(card);
         }
@@ -285,6 +334,7 @@ namespace TechCosmos.Hub.Editor
 
             var sidebar = new VisualElement();
             sidebar.AddToClassList("hub-sidebar");
+            HubTheme.ApplySidebarLayout(sidebar);
 
             var searchWrap = new VisualElement();
             searchWrap.AddToClassList("hub-search-wrap");
@@ -663,16 +713,18 @@ namespace TechCosmos.Hub.Editor
 
             shell.Top.Add(btnRow);
 
-            shell.Top.Add(HubUiFactory.Label("依赖关系", "hub-section-title"));
-            shell.Top.Add(HubUiFactory.DependencySection(importPlan, id =>
+            var depSection = HubUiFactory.DependencySection(importPlan, id =>
             {
                 if (string.IsNullOrEmpty(id)) return;
                 _selectedPackageId = id;
                 RefreshSidebar();
                 RefreshDetail();
-            }));
+            });
+            HubTheme.ApplyDependencySectionLayout(depSection);
+            shell.ScrollContent.Add(HubUiFactory.Label("依赖关系", "hub-section-title"));
+            shell.ScrollContent.Add(depSection);
 
-            shell.Top.Add(HubUiFactory.Label("介绍 / README", "hub-section-title"));
+            shell.ScrollContent.Add(HubUiFactory.Label("介绍 / README", "hub-section-title"));
             AddReadmeCard(shell.ScrollContent, pkg, _catalog);
         }
 
