@@ -39,7 +39,6 @@ namespace TechCosmos.Hub.Editor
         private ToolbarSearchField _searchField;
         private Button _batchImportBtn;
         private StyleSheet _hubStylesheet;
-        private bool _stylesheetRetryScheduled;
 
         [MenuItem("Tech-Cosmos/Hub", false, 0)]
         public static void Open()
@@ -51,10 +50,10 @@ namespace TechCosmos.Hub.Editor
 
         private void CreateGUI()
         {
+            LoadStylesheet();
+
             rootVisualElement.style.flexGrow = 1;
             rootVisualElement.style.flexDirection = FlexDirection.Column;
-
-            AttachStylesheet(forceReload: true);
 
             _root = new VisualElement();
             _root.AddToClassList("hub-root");
@@ -64,7 +63,6 @@ namespace TechCosmos.Hub.Editor
             BuildHeader();
             BuildTabs();
             BuildBody();
-            HubTheme.ApplyShellLayout(_root, _body, _detailPanel);
 
             _root.RegisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
 
@@ -89,42 +87,20 @@ namespace TechCosmos.Hub.Editor
 
         private void RefreshAfterPackageChange()
         {
-            AttachStylesheet(forceReload: true);
+            LoadStylesheet(forceReload: true);
             ReloadData();
         }
 
-        private void AttachStylesheet(bool forceReload)
+        private void LoadStylesheet(bool forceReload = false)
         {
-            if (HubTheme.Attach(rootVisualElement, ref _hubStylesheet, forceReload))
+            if (!HubTheme.Attach(rootVisualElement, ref _hubStylesheet, forceReload))
             {
-                _stylesheetRetryScheduled = false;
-                return;
+                var paths = string.Join("\n  ", HubTheme.EnumerateStylesheetAssetPaths());
+                Debug.LogWarning(
+                    "[Tech-Cosmos Hub] 未能加载 TechCosmosHub.uss，界面样式将不完整。\n" +
+                    $"尝试路径:\n  {paths}\n" +
+                    "请关闭 Hub 后重新打开；若仍失败，在 Package Manager 中 Remove 再 Add Hub 包。");
             }
-
-            var paths = string.Join("\n  ", HubTheme.EnumerateStylesheetAssetPaths());
-            Debug.LogWarning(
-                "[Tech-Cosmos Hub] 未能加载 TechCosmosHub.uss，已启用降级配色。\n" +
-                $"尝试路径:\n  {paths}\n" +
-                "请关闭 Hub 窗口后重新打开；若仍失败，在 Package Manager 中 Remove 再 Add Hub 包。");
-
-            if (_root != null)
-                HubTheme.ApplyFallbackChrome(_root, _header, _body);
-
-            if (_stylesheetRetryScheduled)
-                return;
-
-            _stylesheetRetryScheduled = true;
-            EditorApplication.delayCall += () =>
-            {
-                if (this == null) return;
-                AttachStylesheet(forceReload: true);
-                if (_hubStylesheet != null)
-                {
-                    RefreshStats();
-                    RefreshSidebar();
-                    RefreshDetail();
-                }
-            };
         }
 
         private void OnEditorUpdate()
@@ -206,7 +182,6 @@ namespace TechCosmos.Hub.Editor
             shell.Scroll.contentContainer.style.alignItems = Align.Stretch;
             shell.Scroll.contentContainer.Add(shell.ScrollContent);
             _detailPanel.Add(shell.Scroll);
-            HubTheme.ApplyDetailShellLayout(shell.Top, shell.Scroll, shell.ScrollContent);
 
             if (withBottom)
             {
@@ -222,7 +197,8 @@ namespace TechCosmos.Hub.Editor
         {
             var card = new VisualElement();
             card.AddToClassList("hub-readme-card");
-            HubTheme.ApplyReadmeCardLayout(card);
+            card.style.flexShrink = 0;
+            card.style.flexDirection = FlexDirection.Column;
             card.Add(HubMarkdownRenderer.Render(markdown, baseDirectory));
             scrollContent.Add(card);
         }
@@ -314,7 +290,6 @@ namespace TechCosmos.Hub.Editor
 
             var sidebar = new VisualElement();
             sidebar.AddToClassList("hub-sidebar");
-            HubTheme.ApplySidebarLayout(sidebar);
 
             var searchWrap = new VisualElement();
             searchWrap.AddToClassList("hub-search-wrap");
