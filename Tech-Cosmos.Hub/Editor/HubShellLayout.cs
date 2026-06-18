@@ -109,6 +109,54 @@ namespace TechCosmos.Hub.Editor
             row.style.width = Length.Percent(100);
         }
 
+        public static void ApplyGitVersionCard(VisualElement card)
+        {
+            if (card == null) return;
+            card.style.flexDirection = FlexDirection.Column;
+            card.style.flexShrink = 0;
+            card.style.width = Length.Percent(100);
+            card.style.minWidth = 0;
+            card.style.marginTop = 8;
+            card.style.marginBottom = 4;
+        }
+
+        public static void ApplyGitVersionHeader(VisualElement header)
+        {
+            if (header == null) return;
+            header.style.flexDirection = FlexDirection.Row;
+            header.style.alignItems = Align.Center;
+            header.style.justifyContent = Justify.SpaceBetween;
+            header.style.marginBottom = 8;
+        }
+
+        public static void ApplyGitVersionFooter(VisualElement footer)
+        {
+            if (footer == null) return;
+            footer.style.flexDirection = FlexDirection.Row;
+            footer.style.flexWrap = Wrap.Wrap;
+            footer.style.alignItems = Align.Center;
+            footer.style.marginTop = 8;
+        }
+
+        public static void ApplyGitVersionTriggerContent(VisualElement content)
+        {
+            if (content == null) return;
+            content.style.flexDirection = FlexDirection.Row;
+            content.style.alignItems = Align.Center;
+            content.style.flexGrow = 1;
+            content.style.width = Length.Percent(100);
+        }
+
+        public static void ApplyGitVersionValueBlock(VisualElement block)
+        {
+            if (block == null) return;
+            block.style.flexDirection = FlexDirection.Column;
+            block.style.flexGrow = 1;
+            block.style.minWidth = 0;
+            block.style.marginLeft = 8;
+            block.style.marginRight = 8;
+        }
+
         public static void ApplyBatchRow(VisualElement row)
         {
             if (row == null) return;

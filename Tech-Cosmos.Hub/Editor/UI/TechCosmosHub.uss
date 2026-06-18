@@ -1178,3 +1178,110 @@
 .hub-toggle {
     color: rgb(200, 208, 220);
 }
+
+/* ── Git version selector ── */
+.hub-git-version-card {
+    flex-direction: column;
+    margin-top: 8px;
+    margin-bottom: 4px;
+    padding: 12px 14px;
+    background-color: rgb(24, 27, 35);
+    border-radius: 10px;
+    border-width: 1px;
+    border-color: rgb(42, 48, 60);
+}
+
+.hub-git-version-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.hub-git-version-title {
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: rgb(210, 216, 228);
+    letter-spacing: 0.04em;
+}
+
+.hub-git-version-count {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    background-color: rgb(38, 44, 58);
+    color: rgb(130, 145, 175);
+}
+
+.hub-git-version-body {
+    flex-direction: column;
+    width: 100%;
+}
+
+.hub-git-version-trigger {
+    width: 100%;
+    height: 38px;
+    padding-left: 12px;
+    padding-right: 12px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgb(50, 56, 70);
+    background-color: rgb(24, 27, 35);
+    -unity-text-align: middle-left;
+}
+
+.hub-git-version-trigger-content {
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 1;
+    width: 100%;
+}
+
+.hub-git-version-value-primary {
+    font-size: 13px;
+    -unity-font-style: bold;
+}
+
+.hub-git-version-value-sub {
+    font-size: 10px;
+    color: rgb(120, 130, 150);
+    margin-top: 1px;
+}
+
+.hub-git-version-chevron {
+    font-size: 12px;
+    color: rgb(130, 140, 160);
+    flex-shrink: 0;
+}
+
+.hub-git-version-footer {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.hub-git-version-hint {
+    font-size: 10px;
+    color: rgb(120, 130, 150);
+    white-space: normal;
+    margin-right: 8px;
+}
+
+.hub-git-version-loading {
+    flex-direction: row;
+    align-items: center;
+    height: 38px;
+    padding-left: 12px;
+    padding-right: 12px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgb(42, 48, 60);
+    background-color: rgb(20, 23, 30);
+}
+
+.hub-git-version-loading-text {
+    font-size: 11px;
+    color: rgb(130, 140, 160);
+    margin-left: 8px;
+}

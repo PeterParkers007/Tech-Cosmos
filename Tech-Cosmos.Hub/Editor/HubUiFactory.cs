@@ -1,4 +1,7 @@
 #if UNITY_EDITOR
+using System;
+using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine.UIElements;
 
 namespace TechCosmos.Hub.Editor
@@ -35,6 +38,13 @@ namespace TechCosmos.Hub.Editor
             else if (className == "hub-tree-item") HubColors.ApplyTreeItem(l);
             else if (className.Contains("hub-chip--category")) HubColors.ApplyChip(l, category: true);
             else if (className.Contains("hub-chip")) HubColors.ApplyChip(l);
+            else if (className == "hub-git-version-title") HubColors.ApplyGitVersionTitle(l);
+            else if (className == "hub-git-version-count") HubColors.ApplyGitVersionCount(l);
+            else if (className == "hub-git-version-hint") HubColors.ApplyGitVersionHint(l);
+            else if (className == "hub-git-version-value-primary") HubColors.ApplyGitVersionValuePrimary(l, latest: l.userData as string == HubGitVersion.LatestLabel);
+            else if (className == "hub-git-version-value-sub") HubColors.ApplyGitVersionValueSub(l);
+            else if (className == "hub-git-version-chevron") HubColors.ApplyGitVersionChevron(l);
+            else if (className == "hub-git-version-loading-text") HubColors.ApplyGitVersionLoadingText(l);
             else if (className.Contains("hub-list-item-name"))
             {
                 // selected state applied separately via ApplyListItemName
@@ -337,6 +347,214 @@ namespace TechCosmos.Hub.Editor
             row.Add(toggle);
             return row;
         }
+
+        public static VisualElement GitVersionSelector(PackageCatalogEntry entry, Action onChanged = null)
+        {
+            var card = new VisualElement();
+            card.AddToClassList("hub-git-version-card");
+            HubShellLayout.ApplyGitVersionCard(card);
+            HubColors.ApplyGitVersionCard(card);
+
+            var header = new VisualElement();
+            header.AddToClassList("hub-git-version-header");
+            HubShellLayout.ApplyGitVersionHeader(header);
+            header.Add(Label("Git 版本", "hub-git-version-title"));
+
+            var countBadge = Label("…", "hub-git-version-count");
+            countBadge.name = "git-version-count";
+            header.Add(countBadge);
+            card.Add(header);
+
+            var body = new VisualElement();
+            body.name = "git-version-body";
+            body.AddToClassList("hub-git-version-body");
+            card.Add(body);
+            ShowGitVersionLoading(body);
+
+            var gitUrl = entry.gitUrl;
+            System.Threading.Tasks.Task.Run(() => HubGitVersion.FetchTags(gitUrl))
+                .ContinueWith(task =>
+                {
+                    var tags = task.Status == System.Threading.Tasks.TaskStatus.RanToCompletion
+                        ? task.Result
+                        : new List<string>();
+                    EditorApplication.delayCall += () =>
+                        PopulateGitVersionBody(body, countBadge, entry, tags, onChanged);
+                });
+
+            return card;
+        }
+
+        private static void ShowGitVersionLoading(VisualElement body)
+        {
+            body.Clear();
+            var row = new VisualElement();
+            row.AddToClassList("hub-git-version-loading");
+            HubColors.ApplyGitVersionLoading(row);
+
+            var dot = new VisualElement();
+            dot.AddToClassList("hub-git-version-loading-dot");
+            HubColors.ApplyGitVersionLoadingDot(dot);
+            row.Add(dot);
+            row.Add(Label("正在获取远程标签…", "hub-git-version-loading-text"));
+            body.Add(row);
+        }
+
+        private static void PopulateGitVersionBody(
+            VisualElement body,
+            Label countBadge,
+            PackageCatalogEntry entry,
+            List<string> tags,
+            Action onChanged)
+        {
+            if (body == null || entry == null)
+                return;
+
+            body.Clear();
+            body.userData = tags;
+
+            var choices = BuildGitVersionChoices(tags);
+            var selectedLabel = ResolveSelectedLabel(entry, choices);
+            UpdateGitVersionCountBadge(countBadge, tags);
+
+            var trigger = CreateGitVersionTrigger(entry, choices, selectedLabel, onChanged);
+            body.Add(trigger);
+
+            var footer = new VisualElement();
+            footer.AddToClassList("hub-git-version-footer");
+            HubShellLayout.ApplyGitVersionFooter(footer);
+
+            if (tags.Count == 0)
+                footer.Add(Label("远程仓库暂无标签，将使用默认分支最新提交", "hub-git-version-hint"));
+
+            if (ManifestHelper.TryGetDependency(entry.id, out var source))
+            {
+                var installed = HubGitVersion.TryParseTag(source, out var installedTag) && !string.IsNullOrEmpty(installedTag)
+                    ? installedTag
+                    : "最新";
+                footer.Add(Badge($"已安装 · {installed}", "hub-badge--installed"));
+            }
+
+            if (footer.childCount > 0)
+                body.Add(footer);
+        }
+
+        private static List<string> BuildGitVersionChoices(List<string> tags)
+        {
+            var choices = new List<string> { HubGitVersion.LatestLabel };
+            choices.AddRange(tags);
+            return choices;
+        }
+
+        private static string ResolveSelectedLabel(PackageCatalogEntry entry, List<string> choices)
+        {
+            var effectiveTag = HubGitVersion.GetEffectiveSelectedTag(entry.id);
+            var selectedLabel = string.IsNullOrEmpty(effectiveTag)
+                ? HubGitVersion.LatestLabel
+                : effectiveTag;
+
+            if (choices.Exists(c => string.Equals(c, selectedLabel, StringComparison.OrdinalIgnoreCase)))
+                return selectedLabel;
+
+            if (!string.IsNullOrEmpty(effectiveTag))
+            {
+                choices.Insert(1, effectiveTag);
+                return effectiveTag;
+            }
+
+            return HubGitVersion.LatestLabel;
+        }
+
+        private static void UpdateGitVersionCountBadge(Label countBadge, List<string> tags)
+        {
+            if (countBadge == null)
+                return;
+
+            countBadge.text = tags.Count > 0 ? $"{tags.Count} 个标签" : "无标签";
+        }
+
+        private static Button CreateGitVersionTrigger(
+            PackageCatalogEntry entry,
+            List<string> choices,
+            string selectedLabel,
+            Action onChanged)
+        {
+            var trigger = new Button { text = "" };
+            trigger.AddToClassList("hub-git-version-trigger");
+            trigger.name = "git-version-trigger";
+            HubColors.RefreshGitVersionTrigger(trigger);
+
+            var content = new VisualElement();
+            content.AddToClassList("hub-git-version-trigger-content");
+            HubShellLayout.ApplyGitVersionTriggerContent(content);
+
+            var icon = Label(GetGitVersionIcon(selectedLabel), "hub-git-version-icon");
+            HubColors.ApplyGitVersionIcon(icon, IsLatestChoice(selectedLabel));
+            content.Add(icon);
+
+            var valueBlock = new VisualElement();
+            HubShellLayout.ApplyGitVersionValueBlock(valueBlock);
+            var primary = Label(GetGitVersionPrimary(selectedLabel), "hub-git-version-value-primary");
+            primary.userData = selectedLabel;
+            HubColors.ApplyGitVersionValuePrimary(primary, IsLatestChoice(selectedLabel));
+            valueBlock.Add(primary);
+
+            var secondaryText = GetGitVersionSecondary(selectedLabel);
+            if (!string.IsNullOrEmpty(secondaryText))
+                valueBlock.Add(Label(secondaryText, "hub-git-version-value-sub"));
+
+            content.Add(valueBlock);
+            content.Add(Label("▾", "hub-git-version-chevron"));
+            trigger.Add(content);
+
+            trigger.clicked += () => ShowGitVersionMenu(trigger, entry, choices, selectedLabel, onChanged);
+            return trigger;
+        }
+
+        private static void ShowGitVersionMenu(
+            Button trigger,
+            PackageCatalogEntry entry,
+            List<string> choices,
+            string selectedLabel,
+            Action onChanged)
+        {
+            var menu = new GenericDropdownMenu();
+            foreach (var choice in choices)
+            {
+                var itemLabel = FormatGitVersionMenuItem(choice);
+                var isSelected = string.Equals(choice, selectedLabel, StringComparison.OrdinalIgnoreCase);
+                var captured = choice;
+                menu.AddItem(itemLabel, isSelected, () =>
+                {
+                    var tag = captured == HubGitVersion.LatestLabel ? "" : captured;
+                    HubGitVersion.SetSelectedTag(entry.id, tag);
+                    onChanged?.Invoke();
+
+                    var body = trigger.parent;
+                    var countBadge = body?.parent?.Q<Label>("git-version-count");
+                    var tags = body?.userData as List<string> ?? new List<string>();
+                    if (body != null)
+                        PopulateGitVersionBody(body, countBadge, entry, tags, onChanged);
+                });
+            }
+
+            menu.DropDown(trigger.worldBound, trigger);
+        }
+
+        private static bool IsLatestChoice(string choice)
+            => choice == HubGitVersion.LatestLabel;
+
+        private static string GetGitVersionIcon(string choice)
+            => IsLatestChoice(choice) ? "◎" : "⎇";
+
+        private static string GetGitVersionPrimary(string choice)
+            => IsLatestChoice(choice) ? "最新" : choice;
+
+        private static string GetGitVersionSecondary(string choice)
+            => IsLatestChoice(choice) ? "main / HEAD" : null;
+
+        private static string FormatGitVersionMenuItem(string choice)
+            => IsLatestChoice(choice) ? "最新  ·  main / HEAD" : choice;
 
         public static VisualElement WarningBox(string text)
         {

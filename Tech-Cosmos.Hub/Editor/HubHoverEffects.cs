@@ -200,6 +200,22 @@ namespace TechCosmos.Hub.Editor
             manipulator.ResetVisual();
         }
 
+        public static void BindGitVersionTrigger(Button trigger)
+        {
+            if (trigger == null) return;
+            PrepareButton(trigger);
+            var manipulator = AttachPressFeedback(trigger, new PressFeedbackManipulator(
+                () => trigger.enabledSelf,
+                () =>
+                {
+                    ClearPressMotion(trigger);
+                    HubColors.ApplyGitVersionTrigger(trigger);
+                },
+                () => ApplyGitVersionTriggerHover(trigger),
+                () => ApplyGitVersionTriggerPressed(trigger)));
+            manipulator.ResetVisual();
+        }
+
         public static void BindMarkdownLink(Label label)
         {
             if (label == null) return;
@@ -349,6 +365,18 @@ namespace TechCosmos.Hub.Editor
             SetPressMotion(button);
             button.style.color = Rgb(90, 135, 220);
             button.style.backgroundColor = Rgb(28, 34, 48);
+        }
+
+        private static void ApplyGitVersionTriggerHover(Button trigger)
+        {
+            ClearPressMotion(trigger);
+            HubColors.ApplyGitVersionTriggerHover(trigger);
+        }
+
+        private static void ApplyGitVersionTriggerPressed(Button trigger)
+        {
+            HubColors.ApplyGitVersionTriggerPressed(trigger);
+            SetPressMotion(trigger);
         }
 
         private static void ApplyListItemHover(VisualElement item)

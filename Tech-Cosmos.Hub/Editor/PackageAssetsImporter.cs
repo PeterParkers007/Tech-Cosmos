@@ -52,7 +52,7 @@ namespace TechCosmos.Hub.Editor
 
             if (!string.IsNullOrEmpty(entry.gitUrl))
             {
-                CloneGitRepository(entry.gitUrl, target);
+                CloneGitRepository(HubGitVersion.ResolveGitSource(entry), target);
                 AssetDatabase.Refresh();
                 Debug.Log($"[Tech-Cosmos Hub] 已从 Git 克隆到 Assets: {GetPackageAssetPath(entry)}");
                 return;
@@ -80,7 +80,7 @@ namespace TechCosmos.Hub.Editor
             if (!string.IsNullOrEmpty(entry.gitUrl))
             {
                 ClearDirectoryContents(target);
-                CloneGitRepository(entry.gitUrl, target);
+                CloneGitRepository(HubGitVersion.ResolveGitSource(entry), target);
                 AssetDatabase.Refresh();
                 Debug.Log($"[Tech-Cosmos Hub] 已从 Git 更新: {GetPackageAssetPath(entry)}");
                 return;
@@ -169,7 +169,7 @@ namespace TechCosmos.Hub.Editor
             }
         }
 
-        private static void CloneGitRepository(string gitUrl, string targetDir)
+        private static void CloneGitRepository(string sourceUrl, string targetDir)
         {
             var tempParent = Path.Combine(Path.GetTempPath(), "TechCosmosHub", Guid.NewGuid().ToString("N"));
             var tempClone = Path.Combine(tempParent, "repo");
@@ -177,9 +177,14 @@ namespace TechCosmos.Hub.Editor
 
             try
             {
-                RunGit($"clone --depth 1 \"{gitUrl}\" \"{tempClone}\"");
+                var repoUrl = HubGitVersion.GetRepositoryCloneUrl(sourceUrl);
+                HubGitVersion.TryParseTag(sourceUrl, out var tag);
+                var cloneArgs = string.IsNullOrEmpty(tag)
+                    ? $"clone --depth 1 \"{repoUrl}\" \"{tempClone}\""
+                    : $"clone --depth 1 --branch \"{tag}\" \"{repoUrl}\" \"{tempClone}\"";
+                RunGit(cloneArgs);
                 if (!Directory.Exists(tempClone))
-                    throw new InvalidOperationException($"Git 克隆失败: {gitUrl}");
+                    throw new InvalidOperationException($"Git 克隆失败: {sourceUrl}");
 
                 CopyDirectory(tempClone, targetDir);
             }

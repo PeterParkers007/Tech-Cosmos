@@ -671,6 +671,9 @@ namespace TechCosmos.Hub.Editor
             HubShellLayout.ApplyDetailHeader(header);
             shell.Top.Add(header);
 
+            if (!string.IsNullOrEmpty(pkg.gitUrl))
+                shell.Top.Add(HubUiFactory.GitVersionSelector(pkg));
+
             var btnRow = new VisualElement();
             btnRow.AddToClassList("hub-btn-row");
 
@@ -1019,8 +1022,6 @@ namespace TechCosmos.Hub.Editor
 
                 if (HubSettings.ImportMode == HubImportMode.GitUpm)
                 {
-                    if (!string.IsNullOrEmpty(pkg.gitUrl))
-                        Client.Add($"{pkg.id}@{pkg.gitUrl}");
                     _pendingResolve = true;
                 }
                 else

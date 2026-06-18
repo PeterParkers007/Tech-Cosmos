@@ -234,7 +234,7 @@ namespace TechCosmos.Hub.Editor
 
             if (!string.IsNullOrEmpty(entry.gitUrl))
             {
-                ManifestHelper.AddDependency(entry.id, entry.gitUrl);
+                ManifestHelper.AddDependency(entry.id, HubGitVersion.ResolveGitSource(entry));
                 return;
             }
 
@@ -272,7 +272,7 @@ namespace TechCosmos.Hub.Editor
 
             if (!string.IsNullOrEmpty(entry.gitUrl))
             {
-                source = entry.gitUrl;
+                source = HubGitVersion.ResolveGitSource(entry);
                 return true;
             }
 

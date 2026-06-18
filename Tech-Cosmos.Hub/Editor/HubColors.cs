@@ -189,6 +189,12 @@ namespace TechCosmos.Hub.Editor
             HubHoverEffects.BindToggle(toggle);
         }
 
+        public static void RefreshGitVersionTrigger(Button trigger)
+        {
+            ApplyGitVersionTrigger(trigger);
+            HubHoverEffects.BindGitVersionTrigger(trigger);
+        }
+
         public static void RefreshMarkdownLink(Label label)
         {
             ApplyMarkdownLink(label);
@@ -307,6 +313,173 @@ namespace TechCosmos.Hub.Editor
             section.style.paddingLeft = 14;
             section.style.paddingRight = 14;
             section.style.marginBottom = 12;
+        }
+
+        public static void ApplyGitVersionCard(VisualElement card)
+        {
+            if (card == null) return;
+            card.style.backgroundColor = CardBg;
+            card.style.borderTopLeftRadius = card.style.borderTopRightRadius =
+                card.style.borderBottomLeftRadius = card.style.borderBottomRightRadius = 10;
+            card.style.borderTopWidth = card.style.borderRightWidth =
+                card.style.borderBottomWidth = card.style.borderLeftWidth = 1;
+            card.style.borderTopColor = card.style.borderRightColor =
+                card.style.borderBottomColor = card.style.borderLeftColor = Rgb(42, 48, 60);
+            card.style.paddingTop = 12;
+            card.style.paddingBottom = 12;
+            card.style.paddingLeft = 14;
+            card.style.paddingRight = 14;
+        }
+
+        public static void ApplyGitVersionTitle(Label label)
+        {
+            if (label == null) return;
+            label.style.fontSize = 11;
+            label.style.color = BodyText;
+            label.style.unityFontStyleAndWeight = FontStyle.Bold;
+            label.style.letterSpacing = 0.4f;
+        }
+
+        public static void ApplyGitVersionCount(Label label)
+        {
+            if (label == null) return;
+            label.style.fontSize = 10;
+            label.style.paddingTop = 3;
+            label.style.paddingBottom = 3;
+            label.style.paddingLeft = 8;
+            label.style.paddingRight = 8;
+            label.style.borderTopLeftRadius = label.style.borderTopRightRadius =
+                label.style.borderBottomLeftRadius = label.style.borderBottomRightRadius = 10;
+            label.style.backgroundColor = Rgb(38, 44, 58);
+            label.style.color = Rgb(130, 145, 175);
+        }
+
+        public static void ApplyGitVersionTrigger(Button trigger)
+        {
+            if (trigger == null) return;
+            trigger.style.height = 38;
+            trigger.style.width = Length.Percent(100);
+            trigger.style.flexDirection = FlexDirection.Row;
+            trigger.style.alignItems = Align.Center;
+            trigger.style.paddingLeft = 12;
+            trigger.style.paddingRight = 12;
+            trigger.style.marginLeft = 0;
+            trigger.style.marginRight = 0;
+            trigger.style.marginTop = 0;
+            trigger.style.marginBottom = 0;
+            trigger.style.borderTopLeftRadius = trigger.style.borderTopRightRadius =
+                trigger.style.borderBottomLeftRadius = trigger.style.borderBottomRightRadius = 8;
+            trigger.style.borderTopWidth = trigger.style.borderRightWidth =
+                trigger.style.borderBottomWidth = trigger.style.borderLeftWidth = 1;
+            trigger.style.borderTopColor = trigger.style.borderRightColor =
+                trigger.style.borderBottomColor = trigger.style.borderLeftColor = Rgb(50, 56, 70);
+            trigger.style.backgroundColor = InputBg;
+            trigger.style.unityTextAlign = TextAnchor.MiddleLeft;
+        }
+
+        public static void ApplyGitVersionTriggerHover(Button trigger)
+        {
+            if (trigger == null) return;
+            trigger.style.borderTopColor = trigger.style.borderRightColor =
+                trigger.style.borderBottomColor = trigger.style.borderLeftColor = Rgb(79, 120, 200);
+            trigger.style.backgroundColor = Rgb(30, 34, 44);
+        }
+
+        public static void ApplyGitVersionTriggerPressed(Button trigger)
+        {
+            ApplyGitVersionTriggerHover(trigger);
+        }
+
+        public static void ApplyGitVersionIcon(Label label, bool latest)
+        {
+            if (label == null) return;
+            label.style.width = 22;
+            label.style.height = 22;
+            label.style.unityTextAlign = TextAnchor.MiddleCenter;
+            label.style.fontSize = 11;
+            label.style.borderTopLeftRadius = label.style.borderTopRightRadius =
+                label.style.borderBottomLeftRadius = label.style.borderBottomRightRadius = 6;
+            label.style.flexShrink = 0;
+            if (latest)
+            {
+                label.style.backgroundColor = new Color(79f / 255f, 140f / 255f, 255f / 255f, 0.16f);
+                label.style.color = Rgb(120, 175, 255);
+            }
+            else
+            {
+                label.style.backgroundColor = new Color(62f / 255f, 207f / 255f, 142f / 255f, 0.14f);
+                label.style.color = Rgb(90, 210, 155);
+            }
+        }
+
+        public static void ApplyGitVersionValuePrimary(Label label, bool latest)
+        {
+            if (label == null) return;
+            label.style.fontSize = 13;
+            label.style.unityFontStyleAndWeight = FontStyle.Bold;
+            label.style.color = latest ? Rgb(210, 220, 240) : Rgb(120, 200, 160);
+        }
+
+        public static void ApplyGitVersionValueSub(Label label)
+        {
+            if (label == null) return;
+            label.style.fontSize = 10;
+            label.style.color = Muted;
+            label.style.marginTop = 1;
+        }
+
+        public static void ApplyGitVersionChevron(Label label)
+        {
+            if (label == null) return;
+            label.style.fontSize = 12;
+            label.style.color = Rgb(130, 140, 160);
+            label.style.flexShrink = 0;
+            label.style.marginLeft = 4;
+        }
+
+        public static void ApplyGitVersionHint(Label label)
+        {
+            if (label == null) return;
+            label.style.fontSize = 10;
+            label.style.color = Muted;
+            label.style.marginTop = 2;
+            label.style.whiteSpace = WhiteSpace.Normal;
+        }
+
+        public static void ApplyGitVersionLoading(VisualElement row)
+        {
+            if (row == null) return;
+            row.style.flexDirection = FlexDirection.Row;
+            row.style.alignItems = Align.Center;
+            row.style.height = 38;
+            row.style.paddingLeft = 12;
+            row.style.paddingRight = 12;
+            row.style.borderTopLeftRadius = row.style.borderTopRightRadius =
+                row.style.borderBottomLeftRadius = row.style.borderBottomRightRadius = 8;
+            row.style.borderTopWidth = row.style.borderRightWidth =
+                row.style.borderBottomWidth = row.style.borderLeftWidth = 1;
+            row.style.borderTopColor = row.style.borderRightColor =
+                row.style.borderBottomColor = row.style.borderLeftColor = Rgb(42, 48, 60);
+            row.style.backgroundColor = Rgb(20, 23, 30);
+        }
+
+        public static void ApplyGitVersionLoadingText(Label label)
+        {
+            if (label == null) return;
+            label.style.fontSize = 11;
+            label.style.color = Rgb(130, 140, 160);
+            label.style.marginLeft = 8;
+        }
+
+        public static void ApplyGitVersionLoadingDot(VisualElement dot)
+        {
+            if (dot == null) return;
+            dot.style.width = 8;
+            dot.style.height = 8;
+            dot.style.borderTopLeftRadius = dot.style.borderTopRightRadius =
+                dot.style.borderBottomLeftRadius = dot.style.borderBottomRightRadius = 4;
+            dot.style.backgroundColor = Primary;
+            dot.style.flexShrink = 0;
         }
 
         public static void ApplyListItem(VisualElement item, bool selected)
@@ -761,6 +934,21 @@ namespace TechCosmos.Hub.Editor
             if (field == null) return;
             field.style.flexGrow = 1;
             field.style.minWidth = 80;
+            field.style.height = 26;
+            field.style.backgroundColor = InputBg;
+            field.style.borderTopColor = field.style.borderRightColor =
+                field.style.borderBottomColor = field.style.borderLeftColor = Rgb(50, 56, 70);
+            field.style.borderTopLeftRadius = field.style.borderTopRightRadius =
+                field.style.borderBottomLeftRadius = field.style.borderBottomRightRadius = 6;
+            field.style.color = BodyText;
+            field.style.fontSize = 12;
+        }
+
+        public static void ApplyPopupField(PopupField<string> field)
+        {
+            if (field == null) return;
+            field.style.flexGrow = 1;
+            field.style.minWidth = 120;
             field.style.height = 26;
             field.style.backgroundColor = InputBg;
             field.style.borderTopColor = field.style.borderRightColor =
