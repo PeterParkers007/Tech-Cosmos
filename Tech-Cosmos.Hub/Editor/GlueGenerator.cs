@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEditor;
@@ -9,29 +8,42 @@ namespace TechCosmos.Hub.Editor
 {
     public static class GlueGenerator
     {
-        private static readonly Dictionary<string, string> TemplateFileMap = new()
+        public static string GetOutputPattern(GlueRecipeEntry recipe, GlueTemplateMetaFile meta = null)
         {
-            { "IntegrationEvents", "IntegrationEvents.g.cs" },
-            { "GameEntityRegistry", "GameEntityRegistry.g.cs" },
-            { "GameCompositionRoot", "GameCompositionRoot.g.cs" },
-            { "CastFlowAdapter", "CastFlowAdapter.g.cs" },
-            { "GameEntityBridge", "GameEntityBridge.g.cs" },
-            { "ControllerInputSource", "ControllerInputSource.g.cs" }
-        };
+            if (recipe == null) return null;
+            if (!string.IsNullOrWhiteSpace(recipe.outputFile))
+                return recipe.outputFile.Trim();
+
+            meta ??= HubDataLoader.LoadTemplatesMeta();
+            var templateEntry = meta?.FindEntry(recipe.template);
+            if (!string.IsNullOrWhiteSpace(templateEntry?.outputFile))
+                return templateEntry.outputFile.Trim();
+
+            return string.IsNullOrWhiteSpace(recipe.template) ? null : recipe.template + ".g.cs";
+        }
+
+        public static string GetOutputFileName(GlueRecipeEntry recipe, GlueTemplateMetaFile meta = null)
+        {
+            var pattern = GetOutputPattern(recipe, meta);
+            return string.IsNullOrWhiteSpace(pattern) ? null : ApplyPlaceholders(pattern, recipe);
+        }
 
         public static string GetOutputFileName(string template)
         {
-            return TemplateFileMap.TryGetValue(template, out var fileName) ? fileName : template + ".g.cs";
+            if (string.IsNullOrWhiteSpace(template)) return null;
+            var meta = HubDataLoader.LoadTemplatesMeta();
+            var entry = meta.FindEntry(template);
+            if (!string.IsNullOrWhiteSpace(entry?.outputFile))
+                return ApplyPlaceholders(entry.outputFile, new GlueRecipeEntry { template = template, id = template });
+
+            return template + ".g.cs";
         }
 
-        public static string GetOutputFileName(GlueRecipeEntry recipe)
-        {
-            if (recipe == null) return null;
-            if (!string.IsNullOrWhiteSpace(recipe.outputFile)) return recipe.outputFile;
-            return string.IsNullOrWhiteSpace(recipe.template) ? null : GetOutputFileName(recipe.template);
-        }
-
-        public static GlueRecipeStatus Evaluate(GlueRecipeEntry recipe, PackageCatalogFile catalog, GlueRecipeFile recipeFile)
+        public static GlueRecipeStatus Evaluate(
+            GlueRecipeEntry recipe,
+            PackageCatalogFile catalog,
+            GlueRecipeFile recipeFile,
+            GlueTemplateMetaFile meta = null)
         {
             var status = new GlueRecipeStatus { Recipe = recipe };
 
@@ -48,7 +60,7 @@ namespace TechCosmos.Hub.Editor
             {
                 foreach (var dep in recipe.dependsOnRecipes)
                 {
-                    if (!IsRecipeOutputPresent(dep, recipeFile))
+                    if (!IsRecipeOutputPresent(dep, recipeFile, meta))
                         status.MissingRecipeOutputs.Add(dep);
                 }
             }
@@ -57,9 +69,10 @@ namespace TechCosmos.Hub.Editor
             return status;
         }
 
-        public static bool Generate(GlueRecipeEntry recipe, GlueRecipeFile recipeFile)
+        public static bool Generate(GlueRecipeEntry recipe, GlueRecipeFile recipeFile, GlueTemplateMetaFile meta = null)
         {
-            var fileName = GetOutputFileName(recipe);
+            meta ??= HubDataLoader.LoadTemplatesMeta();
+            var fileName = GetOutputFileName(recipe, meta);
             if (string.IsNullOrWhiteSpace(fileName))
                 throw new InvalidOperationException($"无法确定输出文件名: {recipe?.id}");
 
@@ -70,24 +83,33 @@ namespace TechCosmos.Hub.Editor
             if (!File.Exists(templatePath))
                 throw new FileNotFoundException("模板文件不存在", templatePath);
 
-            var template = File.ReadAllText(templatePath);
-            template = template.Replace("{{HERO_TYPE}}", HubSettings.HeroType);
-            template = template.Replace("{{HERO_NAMESPACE}}", HubSettings.HeroNamespace);
+            var content = ApplyPlaceholders(File.ReadAllText(templatePath), recipe);
 
-            var outputDir = Path.Combine(HubPaths.ProjectRoot, recipeFile.outputRoot);
+            var outputRoot = string.IsNullOrWhiteSpace(recipeFile.outputRoot)
+                ? "Assets/_Game/Generated/Hub"
+                : recipeFile.outputRoot;
+            var outputDir = Path.Combine(HubPaths.ProjectRoot, outputRoot);
             Directory.CreateDirectory(outputDir);
 
             var outputPath = Path.Combine(outputDir, fileName);
-            File.WriteAllText(outputPath, template, Encoding.UTF8);
+            var outputFolder = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrEmpty(outputFolder))
+                Directory.CreateDirectory(outputFolder);
+
+            File.WriteAllText(outputPath, content, Encoding.UTF8);
 
             AssetDatabase.Refresh();
-            Debug.Log($"[Tech-Cosmos Hub] 已生成胶水: {recipeFile.outputRoot}/{fileName}");
+            Debug.Log($"[Tech-Cosmos Hub] 已生成胶水: {outputRoot}/{fileName}");
             return true;
         }
 
-        public static void GenerateAllReady(PackageCatalogFile catalog, GlueRecipeFile recipeFile)
+        public static void GenerateAllReady(
+            PackageCatalogFile catalog,
+            GlueRecipeFile recipeFile,
+            GlueTemplateMetaFile meta = null)
         {
             if (recipeFile?.recipes == null) return;
+            meta ??= HubDataLoader.LoadTemplatesMeta();
 
             var generated = new HashSet<string>();
             for (var pass = 0; pass < recipeFile.recipes.Length + 1; pass++)
@@ -97,10 +119,10 @@ namespace TechCosmos.Hub.Editor
                 {
                     if (recipe == null || generated.Contains(recipe.id)) continue;
 
-                    var status = Evaluate(recipe, catalog, recipeFile);
+                    var status = Evaluate(recipe, catalog, recipeFile, meta);
                     if (!status.CanGenerate) continue;
 
-                    Generate(recipe, recipeFile);
+                    Generate(recipe, recipeFile, meta);
                     generated.Add(recipe.id);
                     any = true;
                 }
@@ -117,24 +139,41 @@ namespace TechCosmos.Hub.Editor
             return null;
         }
 
-        private static bool IsRecipeOutputPresent(string recipeId, GlueRecipeFile recipeFile)
+        private static bool IsRecipeOutputPresent(
+            string recipeId,
+            GlueRecipeFile recipeFile,
+            GlueTemplateMetaFile meta = null)
         {
             var recipe = FindRecipe(recipeFile, recipeId);
             if (recipe == null) return false;
 
-            var fileName = GetOutputFileName(recipe);
+            var fileName = GetOutputFileName(recipe, meta);
             if (string.IsNullOrWhiteSpace(fileName)) return false;
 
             var path = Path.Combine(HubPaths.ProjectRoot, recipeFile.outputRoot, fileName);
             return File.Exists(path);
+        }
+
+        private static string ApplyPlaceholders(string text, GlueRecipeEntry recipe)
+        {
+            if (string.IsNullOrEmpty(text) || recipe == null) return text;
+
+            var displayName = string.IsNullOrWhiteSpace(recipe.displayName) ? recipe.id : recipe.displayName;
+            return text
+                .Replace("{{TEMPLATE}}", recipe.template ?? string.Empty)
+                .Replace("{{RECIPE_ID}}", recipe.id ?? string.Empty)
+                .Replace("{{DISPLAY_NAME}}", displayName ?? string.Empty)
+                .Replace("{{HERO_TYPE}}", HubSettings.HeroType)
+                .Replace("{{HERO_NAMESPACE}}", HubSettings.HeroNamespace)
+                .Replace("{{PROJECT_NAME}}", HubSettings.ProjectDisplayName);
         }
     }
 
     public sealed class GlueRecipeStatus
     {
         public GlueRecipeEntry Recipe;
-        public readonly List<string> MissingPackages = new();
-        public readonly List<string> MissingRecipeOutputs = new();
+        public readonly System.Collections.Generic.List<string> MissingPackages = new();
+        public readonly System.Collections.Generic.List<string> MissingRecipeOutputs = new();
         public bool CanGenerate;
     }
 }

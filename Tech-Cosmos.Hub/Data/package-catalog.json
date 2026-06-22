@@ -1,5 +1,17 @@
 {
   "frameworkRoot": "Assets/Framework",
+  "categories": [
+    { "name": "Foundation", "children": [] },
+    { "name": "Framework", "children": [] },
+    { "name": "Component", "children": [] },
+    { "name": "Infra", "children": [] },
+    { "name": "Runtime", "children": [] },
+    { "name": "Module", "children": [] },
+    { "name": "Pipeline", "children": [] },
+    { "name": "Tool", "children": [] },
+    { "name": "OS", "children": [] },
+    { "name": "Other", "children": [] }
+  ],
   "packages": [
     {
       "id": "com.techcosmos.core",
@@ -44,6 +56,15 @@
       "description": "DamageRequest / Heal 战斗契约（解耦层）",
       "dependsOn": ["com.techcosmos.core"],
       "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.CombatSystem.git"
+    },
+    {
+      "id": "com.techcosmos.physicssystem",
+      "folder": "Tech-Cosmos.Framework.PhysicsSystem",
+      "displayName": "Physics System",
+      "category": "Framework",
+      "description": "纯 C# 物理框架，可替代 Unity Physics（Runtime 无引擎依赖 + Unity 适配层）",
+      "dependsOn": ["com.techcosmos.core"],
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.PhysicsSystem.git"
     },
     {
       "id": "com.techcosmos.skillsystem",

@@ -27,7 +27,32 @@ DATA_FILES = {
     "catalog": os.path.join(DATA_DIR, "package-catalog.json"),
     "recipes": os.path.join(DATA_DIR, "glue-recipes.json"),
     "structure": os.path.join(DATA_DIR, "project-structure.json"),
+    "templatesMeta": os.path.join(DATA_DIR, "templates-meta.json"),
 }
+
+DEFAULT_TEMPLATES_META: dict = {
+    "categories": [
+        {"name": "Glue", "children": []},
+        {"name": "Project", "children": []},
+        {"name": "Other", "children": []},
+    ],
+    "entries": [],
+}
+
+
+def ensure_data_files() -> None:
+    """首次运行或升级后补齐 Data 文件，避免 API 404。"""
+    os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(TEMPLATES_DIR, exist_ok=True)
+    meta_path = DATA_FILES["templatesMeta"]
+    if not os.path.isfile(meta_path):
+        write_json(meta_path, DEFAULT_TEMPLATES_META)
+
+
+def read_json_or_default(path: str, default: dict) -> dict:
+    if not os.path.isfile(path):
+        return default
+    return read_json(path)
 
 
 def json_response(handler: SimpleHTTPRequestHandler, status: int, payload: dict) -> None:
@@ -165,6 +190,8 @@ def build_meta() -> dict:
         "port": PORT,
         "isGitRepo": top is not None,
         "warnings": build_warnings(),
+        "apiVersion": 2,
+        "supportedDataKeys": list(DATA_FILES.keys()),
     }
 
 
@@ -191,7 +218,7 @@ class HubStudioHandler(SimpleHTTPRequestHandler):
 
     def end_headers(self) -> None:
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, PUT, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, PUT, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         super().end_headers()
 
@@ -221,6 +248,9 @@ class HubStudioHandler(SimpleHTTPRequestHandler):
 
         for key, file_path in DATA_FILES.items():
             if path == f"/api/data/{key}":
+                if key == "templatesMeta":
+                    json_response(self, 200, read_json_or_default(file_path, DEFAULT_TEMPLATES_META))
+                    return
                 if not os.path.isfile(file_path):
                     json_response(self, 404, {"error": f"missing file: {file_path}"})
                     return
@@ -303,7 +333,28 @@ class HubStudioHandler(SimpleHTTPRequestHandler):
             json_response(self, 200, {"ok": True, "path": file_path})
             return
 
-        json_response(self, 404, {"error": "not found"})
+        json_response(self, 404, {"error": f"not found: {path}"})
+
+    def do_DELETE(self) -> None:
+        parsed = urlparse(self.path)
+        path = parsed.path
+
+        if path.startswith("/api/templates/"):
+            name = unquote(path[len("/api/templates/"):])
+            if not name or "/" in name or "\\" in name or ".." in name:
+                json_response(self, 400, {"error": "invalid template name"})
+                return
+            file_path = os.path.join(TEMPLATES_DIR, name + ".txt")
+            try:
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+            except OSError as exc:
+                json_response(self, 500, {"error": str(exc)})
+                return
+            json_response(self, 200, {"ok": True, "deleted": name})
+            return
+
+        json_response(self, 404, {"error": f"not found: {path}"})
 
 
 def main() -> int:
@@ -312,6 +363,7 @@ def main() -> int:
         print("请在 Tech-Cosmos.Hub 包内运行（Tools/HubStudio 的上两级应含 Data/）。", file=sys.stderr)
         return 1
 
+    ensure_data_files()
     server = HTTPServer(("127.0.0.1", PORT), HubStudioHandler)
     write_running_manifest()
     print(f"Hub Studio  http://127.0.0.1:{PORT}")

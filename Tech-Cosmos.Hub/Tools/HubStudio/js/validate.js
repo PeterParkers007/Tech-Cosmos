@@ -1,3 +1,9 @@
+import { flattenCategoryPaths, normalizeCategoryTree } from "./categoryTree.js";
+
+function categoryPathSet(categories) {
+  return new Set(flattenCategoryPaths(normalizeCategoryTree(categories)));
+}
+
 export function validateAll(state) {
   const issues = [];
   issues.push(...validateCatalog(state.catalog));
@@ -28,6 +34,11 @@ export function validateCatalog(catalog) {
     if (p?.id?.trim()) allIds.add(p.id.trim());
   }
 
+  const categorySet = categoryPathSet(catalog?.categories);
+  if (!categorySet.size) {
+    push(issues, "warning", "catalog", "categories 为空，侧栏将无法分组");
+  }
+
   const seen = new Set();
   for (let i = 0; i < packages.length; i++) {
     const p = packages[i];
@@ -40,6 +51,9 @@ export function validateCatalog(catalog) {
     if (!p.folder?.trim()) push(issues, "error", "catalog", `${label}: 缺少 folder`, p.id);
     if (!p.displayName?.trim()) push(issues, "warning", "catalog", `${p.id || label}: 缺少 displayName`, p.id);
     if (!p.category?.trim()) push(issues, "warning", "catalog", `${p.id || label}: 缺少 category`, p.id);
+    else if (categorySet.size && !categorySet.has(p.category.trim())) {
+      push(issues, "warning", "catalog", `${p.id}: 分类「${p.category}」不在 categories 树中`, p.id);
+    }
     if (p.id === "com.techcosmos.hub") {
       push(issues, "warning", "catalog", "Hub 自身不应出现在 catalog（会被 UI 过滤）", p.id);
     }
@@ -67,6 +81,11 @@ export function validateRecipes(recipes, catalog) {
     push(issues, "warning", "recipes", "outputRoot 为空");
   }
 
+  const categorySet = categoryPathSet(recipes.categories);
+  if (!categorySet.size) {
+    push(issues, "warning", "recipes", "categories 为空，Hub 侧栏将无法分组");
+  }
+
   const packageIds = new Set((catalog?.packages || []).map((p) => p.id).filter(Boolean));
   const list = recipes.recipes || [];
   const ids = new Set();
@@ -81,6 +100,13 @@ export function validateRecipes(recipes, catalog) {
 
     if (!r.template?.trim()) push(issues, "error", "recipes", `${r.id || label}: 缺少 template`, r.id);
     if (!r.displayName?.trim()) push(issues, "warning", "recipes", `${r.id || label}: 缺少 displayName`, r.id);
+    if (r.category?.trim() && categorySet.size && !categorySet.has(r.category.trim())) {
+      push(issues, "warning", "recipes", `${r.id}: 分类「${r.category}」不在 categories 树中`, r.id);
+    }
+    const resolved = r.outputFile?.trim() || r.template?.trim();
+    if (resolved && /[\\:*?"<>|]/.test(resolved)) {
+      push(issues, "warning", "recipes", `${r.id}: 输出路径含非法字符`, r.id);
+    }
 
     for (const req of r.requires || []) {
       if (!req?.trim()) push(issues, "error", "recipes", `${r.id}: requires 含空项`, r.id);
@@ -108,6 +134,7 @@ export function validateStructure(structure) {
     return issues;
   }
 
+  const categorySet = categoryPathSet(structure.categories);
   const presets = structure.presets || [];
   const ids = new Set();
 
@@ -118,6 +145,11 @@ export function validateStructure(structure) {
     if (!p.id?.trim()) push(issues, "error", "structure", `${label}: 缺少 id`, p.id);
     else if (ids.has(p.id)) push(issues, "error", "structure", `重复的 preset id: ${p.id}`, p.id);
     else ids.add(p.id);
+
+    if (!p.category?.trim()) push(issues, "warning", "structure", `${p.id || label}: 缺少 category`, p.id);
+    else if (categorySet.size && !categorySet.has(p.category.trim())) {
+      push(issues, "warning", "structure", `${p.id}: 分类「${p.category}」不在 categories 树中`, p.id);
+    }
 
     if (!p.root?.trim()) push(issues, "warning", "structure", `${p.id || label}: root 为空`, p.id);
     else if (!p.root.startsWith("Assets/")) {

@@ -33,6 +33,7 @@
       <div class="sidebar-toolbar">
         <input type="search" id="searchInput" class="search" placeholder="搜索…" />
         <button type="button" id="btnAdd" class="btn btn-accent btn-sm">+ 新建</button>
+        <button type="button" id="btnCategories" class="btn btn-ghost btn-sm hidden">+ 分类</button>
       </div>
       <ul id="itemList" class="item-list"></ul>
     </aside>
@@ -40,7 +41,7 @@
     <section class="editor" id="editorPanel">
       <div class="empty-state" id="emptyState">
         <h2>选择或新建一项</h2>
-        <p>选择左侧条目编辑。保存写入本仓库 <code>Data/</code>。</p>
+        <p>选择左侧条目编辑。胶水 tab 未选中条目时可编辑分类列表。保存写入本仓库 <code>Data/</code>。</p>
       </div>
       <form id="editorForm" class="editor-form hidden" autocomplete="off"></form>
     </section>
@@ -57,6 +58,6 @@
     <span id="gitInfo"></span>
   </footer>
 
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/app.js?v=11"></script>
 </body>
 </html>

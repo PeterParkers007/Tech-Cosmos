@@ -1,53 +1,146 @@
 {
-  "outputRoot": "Assets/_Game/Generated/Hub",
+  "outputRoot": "Assets/_Game/Generated/Hub/Shader",
+  "categories": [
+    {
+      "name": "Integration",
+      "children": []
+    },
+    {
+      "name": "Core",
+      "children": []
+    },
+    {
+      "name": "Bridge",
+      "children": []
+    },
+    {
+      "name": "Input",
+      "children": []
+    },
+    {
+      "name": "ECS",
+      "children": [
+        {
+          "name": "Component",
+          "children": []
+        },
+        {
+          "name": "System",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "Shader",
+      "children": []
+    },
+    {
+      "name": "Other",
+      "children": []
+    }
+  ],
   "recipes": [
     {
       "id": "integration-events",
       "displayName": "集成事件定义",
+      "category": "Integration",
       "description": "CastRequested / CastConfirmed 等项目层 EventBus 事件 struct",
-      "requires": ["com.techcosmos.core", "com.techcosmos.eventbus"],
-      "template": "IntegrationEvents"
+      "requires": [
+        "com.techcosmos.core",
+        "com.techcosmos.eventbus"
+      ],
+      "template": "IntegrationEvents",
+      "dependsOnRecipes": []
     },
     {
       "id": "entity-registry",
       "displayName": "实体注册表",
+      "category": "Core",
       "description": "EntityHandle ↔ Transform / 战斗接口",
-      "requires": ["com.techcosmos.core", "com.techcosmos.combatsystem"],
-      "template": "GameEntityRegistry"
+      "requires": [
+        "com.techcosmos.core",
+        "com.techcosmos.combatsystem"
+      ],
+      "template": "GameEntityRegistry",
+      "dependsOnRecipes": []
     },
     {
       "id": "composition-root",
       "displayName": "组合根",
+      "category": "Core",
       "description": "持有 InputHub / TargetingHub / CombatHub / EventBus 单例",
-      "requires": ["com.techcosmos.core", "com.techcosmos.inputsystem", "com.techcosmos.targetingsystem", "com.techcosmos.combatsystem", "com.techcosmos.eventbus"],
-      "dependsOnRecipes": ["entity-registry"],
-      "template": "GameCompositionRoot"
+      "requires": [
+        "com.techcosmos.core",
+        "com.techcosmos.inputsystem",
+        "com.techcosmos.targetingsystem",
+        "com.techcosmos.combatsystem",
+        "com.techcosmos.eventbus"
+      ],
+      "dependsOnRecipes": [
+        "entity-registry"
+      ],
+      "template": "GameCompositionRoot",
+      "needsHeroType": false
     },
     {
       "id": "cast-flow",
       "displayName": "施法流 Adapter",
+      "category": "Integration",
       "description": "InputIntent → Target → SkillContext → TriggerEvent",
-      "requires": ["com.techcosmos.core", "com.techcosmos.inputsystem", "com.techcosmos.targetingsystem", "com.techcosmos.skillsystem", "com.techcosmos.eventbus"],
-      "dependsOnRecipes": ["composition-root", "integration-events"],
+      "requires": [
+        "com.techcosmos.core",
+        "com.techcosmos.inputsystem",
+        "com.techcosmos.targetingsystem",
+        "com.techcosmos.skillsystem",
+        "com.techcosmos.eventbus"
+      ],
+      "dependsOnRecipes": [
+        "composition-root",
+        "integration-events"
+      ],
       "template": "CastFlowAdapter",
       "needsHeroType": true
     },
     {
       "id": "entity-bridge",
       "displayName": "实体桥接组件",
+      "category": "Bridge",
       "description": "MonoBehaviour 桥：EntityHandle + Combat + Hero",
-      "requires": ["com.techcosmos.core", "com.techcosmos.combatsystem", "com.techcosmos.skillsystem"],
-      "dependsOnRecipes": ["composition-root", "entity-registry"],
+      "requires": [
+        "com.techcosmos.core",
+        "com.techcosmos.combatsystem",
+        "com.techcosmos.skillsystem"
+      ],
+      "dependsOnRecipes": [
+        "composition-root",
+        "entity-registry"
+      ],
       "template": "GameEntityBridge",
       "needsHeroType": true
     },
     {
       "id": "controller-input",
       "displayName": "控制器输入源",
+      "category": "Input",
       "description": "Unity 键盘 → InputIntent",
-      "requires": ["com.techcosmos.core", "com.techcosmos.inputsystem"],
-      "dependsOnRecipes": ["composition-root"],
+      "requires": [
+        "com.techcosmos.core",
+        "com.techcosmos.inputsystem"
+      ],
+      "dependsOnRecipes": [
+        "composition-root"
+      ],
       "template": "ControllerInputSource"
+    },
+    {
+      "id": "SpriteOutline",
+      "displayName": "精灵描边",
+      "category": "Shader",
+      "description": "",
+      "requires": [],
+      "dependsOnRecipes": [],
+      "template": "SpriteOutline",
+      "needsHeroType": false
     }
   ]
 }

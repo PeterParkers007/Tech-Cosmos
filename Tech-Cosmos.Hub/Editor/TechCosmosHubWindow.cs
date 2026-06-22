@@ -325,7 +325,9 @@ namespace TechCosmos.Hub.Editor
             HubColors.RefreshTab(_tabProjectStructure, tab == HubTab.ProjectStructure);
 
             if (_searchField != null)
-                _searchField.style.display = tab == HubTab.Packages ? DisplayStyle.Flex : DisplayStyle.None;
+                _searchField.style.display = tab == HubTab.Packages || tab == HubTab.Glue
+                    ? DisplayStyle.Flex
+                    : DisplayStyle.None;
 
             RefreshSidebar();
             RefreshDetail();
@@ -565,34 +567,44 @@ namespace TechCosmos.Hub.Editor
                 return;
             }
 
-            _sidebarList.Add(HubUiFactory.Label("GLUE RECIPES", "hub-category-label"));
+            var filtered = _recipes.recipes
+                .Where(MatchesGlueSearch)
+                .GroupBy(r => string.IsNullOrWhiteSpace(r.category) ? "Other" : r.category.Trim())
+                .OrderBy(g => g.Key);
 
-            foreach (var recipe in _recipes.recipes)
+            foreach (var group in filtered)
             {
-                var status = GlueGenerator.Evaluate(recipe, _catalog, _recipes);
-                var selected = recipe.id == _selectedRecipeId;
-                var captured = recipe;
+                _sidebarList.Add(HubUiFactory.Label(group.Key.ToUpperInvariant(), "hub-category-label"));
+                if (_sidebarList[_sidebarList.childCount - 1] is Label catLabel)
+                    HubColors.ApplyCategoryLabel(catLabel);
 
-                var item = HubUiFactory.SidebarItem(selected, el =>
+                foreach (var recipe in group.OrderBy(r => r.displayName))
                 {
-                    var dot = new VisualElement();
-                    dot.AddToClassList("hub-status-dot");
-                    HubColors.ApplyStatusDot(dot, status.CanGenerate);
-                    el.Add(dot);
+                    var status = GlueGenerator.Evaluate(recipe, _catalog, _recipes);
+                    var selected = recipe.id == _selectedRecipeId;
+                    var captured = recipe;
 
-                    var nameLbl = HubUiFactory.Label(recipe.displayName, "hub-list-item-name");
-                    HubColors.ApplyListItemName(nameLbl, selected);
-                    el.Add(nameLbl);
-                });
+                    var item = HubUiFactory.SidebarItem(selected, el =>
+                    {
+                        var dot = new VisualElement();
+                        dot.AddToClassList("hub-status-dot");
+                        HubColors.ApplyStatusDot(dot, status.CanGenerate);
+                        el.Add(dot);
 
-                item.RegisterCallback<ClickEvent>(_ =>
-                {
-                    _selectedRecipeId = captured.id;
-                    RefreshSidebar();
-                    RefreshDetail();
-                });
+                        var nameLbl = HubUiFactory.Label(recipe.displayName, "hub-list-item-name");
+                        HubColors.ApplyListItemName(nameLbl, selected);
+                        el.Add(nameLbl);
+                    });
 
-                _sidebarList.Add(item);
+                    item.RegisterCallback<ClickEvent>(_ =>
+                    {
+                        _selectedRecipeId = captured.id;
+                        RefreshSidebar();
+                        RefreshDetail();
+                    });
+
+                    _sidebarList.Add(item);
+                }
             }
 
             var batchRow = new VisualElement();
@@ -605,6 +617,21 @@ namespace TechCosmos.Hub.Editor
                 RefreshDetail();
             }));
             _sidebarFooter.Add(batchRow);
+
+            var visible = _recipes.recipes.Count(MatchesGlueSearch);
+            _sidebarFooter.Add(HubUiFactory.Label($"{visible} / {_recipes.recipes.Length} 项", "hub-sidebar-hint"));
+        }
+
+        private bool MatchesGlueSearch(GlueRecipeEntry recipe)
+        {
+            if (recipe == null) return false;
+            if (string.IsNullOrEmpty(_search)) return true;
+            var q = _search.Trim();
+            return ContainsIgnoreCase(recipe.displayName, q)
+                   || ContainsIgnoreCase(recipe.description, q)
+                   || ContainsIgnoreCase(recipe.id, q)
+                   || ContainsIgnoreCase(recipe.category, q)
+                   || ContainsIgnoreCase(recipe.template, q);
         }
 
         private bool MatchesSearch(PackageCatalogEntry p)
@@ -786,6 +813,9 @@ namespace TechCosmos.Hub.Editor
             HubShellLayout.ApplyDetailHeader(header);
             var meta = HubUiFactory.MetaRow();
             meta.Add(HubUiFactory.Label(
+                string.IsNullOrWhiteSpace(recipe.category) ? "Other" : recipe.category.Trim(),
+                "hub-chip hub-chip--category"));
+            meta.Add(HubUiFactory.Label(
                 $"输出 → {_recipes.outputRoot}/{GlueGenerator.GetOutputFileName(recipe)}",
                 "hub-chip"));
             meta.Add(HubUiFactory.Badge(
@@ -795,7 +825,7 @@ namespace TechCosmos.Hub.Editor
 
             var btnRow = new VisualElement();
             btnRow.AddToClassList("hub-btn-row");
-            var genBtn = HubUiFactory.Button($"生成 {recipe.template}.g.cs", "hub-btn hub-btn--primary", () =>
+            var genBtn = HubUiFactory.Button($"生成 {GlueGenerator.GetOutputFileName(recipe)}", "hub-btn hub-btn--primary", () =>
             {
                 try
                 {

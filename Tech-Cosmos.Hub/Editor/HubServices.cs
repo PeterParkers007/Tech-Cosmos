@@ -32,6 +32,14 @@ namespace TechCosmos.Hub.Editor
             var json = File.ReadAllText(HubPaths.ProjectStructureJson);
             return JsonUtility.FromJson<ProjectStructureFile>(json) ?? new ProjectStructureFile();
         }
+
+        public static GlueTemplateMetaFile LoadTemplatesMeta()
+        {
+            if (!File.Exists(HubPaths.TemplatesMetaJson))
+                return new GlueTemplateMetaFile();
+            var json = File.ReadAllText(HubPaths.TemplatesMetaJson);
+            return JsonUtility.FromJson<GlueTemplateMetaFile>(json) ?? new GlueTemplateMetaFile();
+        }
     }
 
     public static class ManifestHelper

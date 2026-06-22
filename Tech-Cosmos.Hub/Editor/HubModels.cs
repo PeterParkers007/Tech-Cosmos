@@ -7,9 +7,17 @@ using UnityEngine;
 namespace TechCosmos.Hub.Editor
 {
     [Serializable]
+    public class HubCategoryNode
+    {
+        public string name;
+        public HubCategoryNode[] children = Array.Empty<HubCategoryNode>();
+    }
+
+    [Serializable]
     public class PackageCatalogFile
     {
         public string frameworkRoot = "Assets/Framework";
+        public HubCategoryNode[] categories = Array.Empty<HubCategoryNode>();
         public PackageCatalogEntry[] packages = Array.Empty<PackageCatalogEntry>();
 
         public IEnumerable<PackageCatalogEntry> BrowsablePackages()
@@ -41,9 +49,36 @@ namespace TechCosmos.Hub.Editor
     }
 
     [Serializable]
+    public class GlueTemplateMetaEntry
+    {
+        public string name;
+        public string category;
+        public string outputFile;
+    }
+
+    [Serializable]
+    public class GlueTemplateMetaFile
+    {
+        public HubCategoryNode[] categories = Array.Empty<HubCategoryNode>();
+        public GlueTemplateMetaEntry[] entries = Array.Empty<GlueTemplateMetaEntry>();
+
+        public GlueTemplateMetaEntry FindEntry(string templateName)
+        {
+            if (string.IsNullOrWhiteSpace(templateName) || entries == null) return null;
+            foreach (var entry in entries)
+            {
+                if (entry != null && entry.name == templateName)
+                    return entry;
+            }
+            return null;
+        }
+    }
+
+    [Serializable]
     public class GlueRecipeFile
     {
         public string outputRoot = "Assets/_Game/Generated/Hub";
+        public HubCategoryNode[] categories = Array.Empty<HubCategoryNode>();
         public GlueRecipeEntry[] recipes = Array.Empty<GlueRecipeEntry>();
     }
 
@@ -52,6 +87,7 @@ namespace TechCosmos.Hub.Editor
     {
         public string id;
         public string displayName;
+        public string category;
         public string description;
         public string[] requires = Array.Empty<string>();
         public string[] dependsOnRecipes = Array.Empty<string>();
@@ -65,6 +101,7 @@ namespace TechCosmos.Hub.Editor
     public class ProjectStructureFile
     {
         public string defaultRoot = "Assets/_Game";
+        public HubCategoryNode[] categories = Array.Empty<HubCategoryNode>();
         public ProjectStructurePreset[] presets = Array.Empty<ProjectStructurePreset>();
     }
 
@@ -73,6 +110,7 @@ namespace TechCosmos.Hub.Editor
     {
         public string id;
         public string displayName;
+        public string category;
         public string description;
         public string root = "Assets/_Game";
         public string[] folders = Array.Empty<string>();
@@ -115,6 +153,7 @@ namespace TechCosmos.Hub.Editor
         public static string CatalogJson => Path.Combine(HubRoot, "Data", "package-catalog.json");
         public static string RecipesJson => Path.Combine(HubRoot, "Data", "glue-recipes.json");
         public static string ProjectStructureJson => Path.Combine(HubRoot, "Data", "project-structure.json");
+        public static string TemplatesMetaJson => Path.Combine(HubRoot, "Data", "templates-meta.json");
         public static string TemplatesDir => Path.Combine(HubRoot, "Data", "Templates");
         public static string ManifestPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Packages", "manifest.json"));
         public static string ProjectRoot => Path.GetFullPath(Path.Combine(Application.dataPath, ".."));

@@ -1,9 +1,14 @@
 {
   "defaultRoot": "Assets/_Game",
+  "categories": [
+    { "name": "Presets", "children": [] },
+    { "name": "Other", "children": [] }
+  ],
   "presets": [
     {
       "id": "minimal",
       "displayName": "精简",
+      "category": "Presets",
       "description": "最小业务目录：Adapter + 脚本 + 资源 + 场景 + 生成物。适合原型或小型项目。",
       "root": "Assets/_Game",
       "folders": [
@@ -17,6 +22,7 @@
     {
       "id": "standard",
       "displayName": "标准（推荐）",
+      "category": "Presets",
       "description": "Tech-Cosmos 推荐结构：Adapters 集成层、Scripts 分类、Resources/Art/Audio、Generated 代码生成输出。",
       "root": "Assets/_Game",
       "folders": [
@@ -51,6 +57,7 @@
     {
       "id": "full",
       "displayName": "完整",
+      "category": "Presets",
       "description": "标准结构 + 网络/本地化/测试/StreamingAssets。适合中大型商业项目。",
       "root": "Assets/_Game",
       "folders": [
