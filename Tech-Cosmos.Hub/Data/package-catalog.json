@@ -183,9 +183,10 @@
       "id": "com.tech-cosmos.toolbox",
       "folder": "Tech-Cosmos.Runtime.ToolBox",
       "displayName": "ToolBox",
-      "category": "Runtime",
+      "category": "Tool",
       "description": "单例等工具",
-      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Runtime.ToolBox.git"
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Runtime.ToolBox.git",
+      "dependsOn": []
     },
     {
       "id": "com.tech-cosmos.animation-kit",
