@@ -1,16 +1,46 @@
 {
   "frameworkRoot": "Assets/Framework",
   "categories": [
-    { "name": "Foundation", "children": [] },
-    { "name": "Framework", "children": [] },
-    { "name": "Component", "children": [] },
-    { "name": "Infra", "children": [] },
-    { "name": "Runtime", "children": [] },
-    { "name": "Module", "children": [] },
-    { "name": "Pipeline", "children": [] },
-    { "name": "Tool", "children": [] },
-    { "name": "OS", "children": [] },
-    { "name": "Other", "children": [] }
+    {
+      "name": "Foundation",
+      "children": []
+    },
+    {
+      "name": "Framework",
+      "children": []
+    },
+    {
+      "name": "Component",
+      "children": []
+    },
+    {
+      "name": "Infra",
+      "children": []
+    },
+    {
+      "name": "Runtime",
+      "children": []
+    },
+    {
+      "name": "Module",
+      "children": []
+    },
+    {
+      "name": "Pipeline",
+      "children": []
+    },
+    {
+      "name": "Tool",
+      "children": []
+    },
+    {
+      "name": "OS",
+      "children": []
+    },
+    {
+      "name": "Other",
+      "children": []
+    }
   ],
   "packages": [
     {
@@ -19,7 +49,8 @@
       "displayName": "Core",
       "category": "Foundation",
       "description": "Float3、EntityHandle、Blackboard — 引擎无关基础契约（解耦层）",
-      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.Core.git"
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.Core.git",
+      "dependsOn": []
     },
     {
       "id": "com.techcosmos.inputsystem",
@@ -27,7 +58,9 @@
       "displayName": "Input System (Intent)",
       "category": "Framework",
       "description": "InputIntent 意图流，配合 Targeting / Skill（解耦层）",
-      "dependsOn": ["com.techcosmos.core"],
+      "dependsOn": [
+        "com.techcosmos.core"
+      ],
       "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.InputSystem.git"
     },
     {
@@ -36,7 +69,9 @@
       "displayName": "Targeting System",
       "category": "Framework",
       "description": "TargetRequest → TargetResult 选目标（解耦层）",
-      "dependsOn": ["com.techcosmos.core"],
+      "dependsOn": [
+        "com.techcosmos.core"
+      ],
       "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.TargetingSystem.git"
     },
     {
@@ -45,7 +80,9 @@
       "displayName": "Event Bus",
       "category": "Framework",
       "description": "类型安全事件总线（解耦层）",
-      "dependsOn": ["com.techcosmos.core"],
+      "dependsOn": [
+        "com.techcosmos.core"
+      ],
       "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.EventBus.git"
     },
     {
@@ -54,17 +91,10 @@
       "displayName": "Combat System",
       "category": "Framework",
       "description": "DamageRequest / Heal 战斗契约（解耦层）",
-      "dependsOn": ["com.techcosmos.core"],
+      "dependsOn": [
+        "com.techcosmos.core"
+      ],
       "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.CombatSystem.git"
-    },
-    {
-      "id": "com.techcosmos.physicssystem",
-      "folder": "Tech-Cosmos.Framework.PhysicsSystem",
-      "displayName": "Physics System",
-      "category": "Framework",
-      "description": "纯 C# 物理框架，可替代 Unity Physics（Runtime 无引擎依赖 + Unity 适配层）",
-      "dependsOn": ["com.techcosmos.core"],
-      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.PhysicsSystem.git"
     },
     {
       "id": "com.techcosmos.skillsystem",
@@ -72,7 +102,8 @@
       "displayName": "Skill System",
       "category": "Framework",
       "description": "六层技能 + 内置 GBF Buff + Graph 编辑器",
-      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.SkillSystem.git"
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.SkillSystem.git",
+      "dependsOn": []
     },
     {
       "id": "com.tech-cosmos.ecs",
@@ -80,7 +111,8 @@
       "displayName": "Entity-OS (ECS)",
       "category": "Framework",
       "description": "实体组件系统",
-      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.ECS.git"
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.ECS.git",
+      "dependsOn": []
     },
     {
       "id": "com.resourcemanager.core",
@@ -88,7 +120,8 @@
       "displayName": "Resource Manager",
       "category": "Framework",
       "description": "Resources ↔ Addressables 可切换资源管理",
-      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.ResourceManager.git"
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.ResourceManager.git",
+      "dependsOn": []
     },
     {
       "id": "com.techcosmos.command-system",
@@ -217,6 +250,17 @@
       "category": "OS",
       "description": "MOBA 命令映射输入，与 Intent 输入双轨并存",
       "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.OS.InputSystem.git"
+    },
+    {
+      "id": "com.techcosmos.physicssystem",
+      "folder": "Tech-Cosmos.Framework.PhysicsSystem",
+      "displayName": "PhysicsSystem",
+      "category": "Framework",
+      "description": "纯 C# 物理框架，替代 Unity Physics：空间哈希广域检测、冲量求解器、射线/重叠查询，以及 Unity 适配组件（CosmosPhysics、CosmosRigidbody、CosmosCollider）运行时层不依赖任何引擎.",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.PhysicsSystem.git",
+      "dependsOn": [
+        "com.techcosmos.core"
+      ]
     }
   ]
 }
