@@ -262,6 +262,15 @@
       "dependsOn": [
         "com.techcosmos.core"
       ]
+    },
+    {
+      "id": "com.techcosmos.unitywebui",
+      "folder": "Tech-Cosmos.Framework.UnityWebUI",
+      "displayName": "Unity WebUI",
+      "category": "Framework",
+      "description": "在 Unity 中用本地 HTML/CSS 做页式 UI（Windows WebView2 GPU），Action Mapper 将按钮点击绑定到 UnityEvent，适合菜单/商店与 AI 生成界面.",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.UnityWebUI.git",
+      "dependsOn": []
     }
   ]
 }
