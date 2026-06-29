@@ -133,11 +133,14 @@
     },
     {
       "id": "com.tech-cosmos.universalselection",
-      "folder": "Tech-Cosmos.Component.UniversalSelection",
-      "displayName": "Universal Selection",
+      "folder": "Tech-Cosmos.Component.SelectionSystem",
+      "displayName": "Selection System",
       "category": "Component",
       "description": "框选、多选框架",
-      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Component.UniversalSelection.git"
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Component.UniversalSelection.git",
+      "dependsOn": [
+        "com.tech-cosmos.ecs"
+      ]
     },
     {
       "id": "com.techcosmos.aios",
