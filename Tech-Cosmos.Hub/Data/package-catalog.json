@@ -53,17 +53,6 @@
       "dependsOn": []
     },
     {
-      "id": "com.techcosmos.inputsystem",
-      "folder": "Tech-Cosmos.Framework.InputSystem",
-      "displayName": "Input System (Intent)",
-      "category": "Framework",
-      "description": "InputIntent 意图流，配合 Targeting / Skill（解耦层）",
-      "dependsOn": [
-        "com.techcosmos.core"
-      ],
-      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.InputSystem.git"
-    },
-    {
       "id": "com.techcosmos.targetingsystem",
       "folder": "Tech-Cosmos.Framework.TargetingSystem",
       "displayName": "Targeting System",
