@@ -53,17 +53,6 @@
       "dependsOn": []
     },
     {
-      "id": "com.techcosmos.targetingsystem",
-      "folder": "Tech-Cosmos.Framework.TargetingSystem",
-      "displayName": "Targeting System",
-      "category": "Framework",
-      "description": "TargetRequest → TargetResult 选目标（解耦层）",
-      "dependsOn": [
-        "com.techcosmos.core"
-      ],
-      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.TargetingSystem.git"
-    },
-    {
       "id": "com.techcosmos.eventbus",
       "folder": "Tech-Cosmos.Framework.EventBus",
       "displayName": "Event Bus",
@@ -73,17 +62,6 @@
         "com.techcosmos.core"
       ],
       "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.EventBus.git"
-    },
-    {
-      "id": "com.techcosmos.combatsystem",
-      "folder": "Tech-Cosmos.Framework.CombatSystem",
-      "displayName": "Combat System",
-      "category": "Framework",
-      "description": "DamageRequest / Heal 战斗契约（解耦层）",
-      "dependsOn": [
-        "com.techcosmos.core"
-      ],
-      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.CombatSystem.git"
     },
     {
       "id": "com.techcosmos.skillsystem",
