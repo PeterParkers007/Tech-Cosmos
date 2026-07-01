@@ -1,0 +1,16 @@
+using System.Collections.Generic;
+using TechCosmos.ToolBox.Runtime;
+using UnityEngine;
+public class GameManager : Singleton<GameManager>
+{
+    [SerializeField]
+    private List<GameObject> managers = new List<GameObject>();
+    private void Start()
+    {
+        foreach (var manager in managers)
+        {
+            var managerInstance = Instantiate(manager, transform);
+            managerInstance.transform.position = Vector2.zero;
+        }
+    }
+}

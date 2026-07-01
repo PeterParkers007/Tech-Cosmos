@@ -29,31 +29,6 @@
       "outputFile": "IntegrationEvents.g.cs"
     },
     {
-      "name": "GameEntityRegistry",
-      "category": "Glue",
-      "outputFile": "GameEntityRegistry.g.cs"
-    },
-    {
-      "name": "GameCompositionRoot",
-      "category": "Glue",
-      "outputFile": "GameCompositionRoot.g.cs"
-    },
-    {
-      "name": "CastFlowAdapter",
-      "category": "Glue",
-      "outputFile": "CastFlowAdapter.g.cs"
-    },
-    {
-      "name": "GameEntityBridge",
-      "category": "Glue",
-      "outputFile": "GameEntityBridge.g.cs"
-    },
-    {
-      "name": "ControllerInputSource",
-      "category": "Glue",
-      "outputFile": "ControllerInputSource.g.cs"
-    },
-    {
       "name": "GameAsmdef",
       "category": "Project/Code",
       "outputFile": "TechCosmos.Game.asmdef"
@@ -72,6 +47,21 @@
       "name": "SpriteOutline",
       "category": "Project/Shader",
       "outputFile": "SpriteOutline.g.cs"
+    },
+    {
+      "name": "GameManager",
+      "category": "Glue",
+      "outputFile": "GameManager.g.cs"
+    },
+    {
+      "name": "UpdateExcuter",
+      "category": "Glue",
+      "outputFile": "UpdateExcuter.g.cs"
+    },
+    {
+      "name": "NewTemplate",
+      "category": "Other",
+      "outputFile": ""
     }
   ]
 }

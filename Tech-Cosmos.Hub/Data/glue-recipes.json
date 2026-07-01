@@ -1,5 +1,5 @@
 {
-  "outputRoot": "Assets/_Game/Generated/Hub/Shader",
+  "outputRoot": "Assets/_Game/Generated/Hub/Manager",
   "categories": [
     {
       "name": "Integration",
@@ -29,6 +29,10 @@
     {
       "name": "Other",
       "children": []
+    },
+    {
+      "name": "Code",
+      "children": []
     }
   ],
   "recipes": [
@@ -52,6 +56,30 @@
       "requires": [],
       "dependsOnRecipes": [],
       "template": "SpriteOutline",
+      "needsHeroType": false
+    },
+    {
+      "id": "GameManager",
+      "displayName": "GameManager",
+      "category": "Code",
+      "description": "用于可控初始化的游戏管理器",
+      "requires": [],
+      "dependsOnRecipes": [],
+      "template": "GameManager",
+      "needsHeroType": false
+    },
+    {
+      "id": "UpdateExcuter",
+      "displayName": "UpdateExcuter",
+      "category": "Code",
+      "description": "用于衔接需要Update系列执行的框架系统包",
+      "requires": [
+        "com.tech-cosmos.ecs",
+        "com.techcosmos.command-system",
+        "com.peterparkers.updatemanager"
+      ],
+      "dependsOnRecipes": [],
+      "template": "UpdateExcuter",
       "needsHeroType": false
     }
   ]

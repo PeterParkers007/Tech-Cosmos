@@ -1,0 +1,35 @@
+using TechCosmos.CommandSystem.Runtime;
+using TechCosmos.ECS.Core;
+using UnityEngine;
+using ZJM_Optimize.Runtime;
+using ZJM_Optimize.Runtime.Interfaces;
+
+public class UpdateExcuter : MonoBehaviour, IObserverUpdate, IObserverFixedUpdate, IObserverLateUpdate
+{
+    public void ObserverUpdate()
+    {
+        ECSManager.Instance.ECS_Update();
+        CommandManager.Instance.ObserverUpdate();
+    }
+    public void ObserverFixedUpdate()
+    {
+        ECSManager.Instance.ECS_FixedUpdate();
+    }
+
+    public void ObserverLateUpdate()
+    {
+        ECSManager.Instance.ECS_LateUpdate();
+    }
+    private void OnEnable()
+    {
+        UpdateManager.RegisterObserverUpdate(this);
+        UpdateManager.RegisterObserverFixedUpdate(this);
+        UpdateManager.RegisterObserverLateUpdate(this);
+    }
+    private void OnDisable()
+    {
+        UpdateManager.UnRegisterObserverUpdate(this);
+        UpdateManager.UnRegisterObserverFixedUpdate(this);
+        UpdateManager.UnRegisterObserverLateUpdate(this);
+    }
+}
