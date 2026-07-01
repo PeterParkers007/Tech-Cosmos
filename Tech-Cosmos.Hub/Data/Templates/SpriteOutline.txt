@@ -1,4 +1,4 @@
-// {{HERO_TYPE}} {{HERO_NAMESPACE}}
+// IntegrationHero TechCosmos.Game.Integration
 Shader "Custom/SpriteOutline" 
 {
     Properties
@@ -7,6 +7,12 @@ Shader "Custom/SpriteOutline"
         _OutlineColor ("Outline Color", Color) = (1,0,0,1)
         _OutlineThickness ("Outline Thickness", Range(0.001, 10)) = 0.01
         _EdgeThreshold ("Edge Threshold", Range(0, 1)) = 0.5
+        
+        // 呼吸效果相关
+        [Toggle] _EnableBreath ("Enable Breath", Float) = 0
+        _BreathSpeed ("Breath Speed", Range(0.1, 5)) = 2
+        _BreathMinScale ("Breath Min Scale", Range(0.1, 2)) = 0.5
+        _BreathMaxScale ("Breath Max Scale", Range(0.1, 5)) = 2
     }
  
     SubShader
@@ -42,11 +48,16 @@ Shader "Custom/SpriteOutline"
             };
  
             sampler2D _MainTex;
-            float4 _MainTex_TexelSize; // 自动获取纹理像素尺寸
+            float4 _MainTex_TexelSize;
             float4 _MainTex_ST;
             float4 _OutlineColor;
             float _OutlineThickness;
             float _EdgeThreshold;
+            
+            float _EnableBreath;
+            float _BreathSpeed;
+            float _BreathMinScale;
+            float _BreathMaxScale;
  
             v2f vert (appdata v)
             {
@@ -56,31 +67,40 @@ Shader "Custom/SpriteOutline"
                 return o;
             }
  
-            float is_edge(sampler2D tex, float2 uv, float2 pixel_size)
+            float is_edge(sampler2D tex, float2 uv, float2 pixel_size, float thickness)
             {
                 float center_alpha = tex2D(tex, uv).a;
-                if (center_alpha > _EdgeThreshold) return 0; // 中心点不透明则不是边缘
+                if (center_alpha > _EdgeThreshold) return 0;
                 
-                // 8方向采样检测
                 float max_alpha = 0;
                 for (int x = -1; x <= 1; x++) {
                     for (int y = -1; y <= 1; y++) {
                         if (x == 0 && y == 0) continue;
-                        float2 offset = float2(x, y) * pixel_size * _OutlineThickness;
+                        float2 offset = float2(x, y) * pixel_size * thickness;
                         max_alpha = max(max_alpha, tex2D(tex, uv + offset).a);
                     }
                 }
-                return step(_EdgeThreshold, max_alpha); // 周围有实心像素则返回1
+                return step(_EdgeThreshold, max_alpha);
             }
  
             fixed4 frag (v2f i) : SV_Target
             {
-                float2 pixel_size = _MainTex_TexelSize.xy; // 正确获取像素尺寸
+                float2 pixel_size = _MainTex_TexelSize.xy;
                 fixed4 col = tex2D(_MainTex, i.uv);
                 
-                float edge = is_edge(_MainTex, i.uv, pixel_size);
+                // 计算当前呼吸的厚度倍率
+                float breathScale = 1.0;
+                if (_EnableBreath > 0.5)
+                {
+                    float breath = sin(_Time.y * _BreathSpeed) * 0.5 + 0.5;
+                    breathScale = lerp(_BreathMinScale, _BreathMaxScale, breath);
+                }
+                
+                float thickness = _OutlineThickness * breathScale;
+                float edge = is_edge(_MainTex, i.uv, pixel_size, thickness);
+                
                 fixed4 final_color = lerp(col, _OutlineColor, edge);
-                final_color.a = max(col.a, edge * _OutlineColor.a); // 保持原始透明度或描边透明度
+                final_color.a = max(col.a, edge * _OutlineColor.a);
                 
                 return final_color;
             }
