@@ -46,7 +46,7 @@
     {
       "name": "SpriteOutline",
       "category": "Project/Shader",
-      "outputFile": "SpriteOutline.g.cs"
+      "outputFile": "SpriteOutline.g.shader"
     },
     {
       "name": "GameManager",
