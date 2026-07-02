@@ -241,6 +241,17 @@
       "description": "在 Unity 中用本地 HTML/CSS 做页式 UI（Windows WebView2 GPU），Action Mapper 将按钮点击绑定到 UnityEvent，适合菜单/商店与 AI 生成界面.",
       "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Framework.UnityWebUI.git",
       "dependsOn": []
+    },
+    {
+      "id": "com.tech-cosmos.collisionsystem",
+      "folder": "Tech-Cosmos.Component.CollisionSystem",
+      "displayName": "SC2碰撞系统",
+      "category": "Component",
+      "description": "基于 TechCosmos ECS 的星际争霸式软碰撞模块：单位分离、目标分散、即插即用 API.",
+      "gitUrl": "https://github.com/PeterParkers007/Tech-Cosmos.Component.CollisionSystem.git",
+      "dependsOn": [
+        "com.tech-cosmos.ecs"
+      ]
     }
   ]
 }
